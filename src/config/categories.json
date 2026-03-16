@@ -1,0 +1,73 @@
+{
+  "pillars": [
+    {
+      "name": "Solar Energy",
+      "subcategories": [
+        "Solar Costs & Financing",
+        "Installation, Permits & Grid Connection",
+        "Climate, Performance & Maintenance",
+        "Utility-Scale Solar & Innovation"
+      ]
+    },
+    {
+      "name": "Wind Power",
+      "subcategories": [
+        "Onshore Wind Farms",
+        "Offshore Wind & Future Development",
+        "When Wind Works (and When It Doesn't)"
+      ]
+    },
+    {
+      "name": "Hydroelectric Power",
+      "subcategories": [
+        "Large Dams & Major Projects",
+        "Small-Scale & Micro Hydro",
+        "Environmental & Social Impacts",
+        "Pumped Storage & Energy Storage"
+      ]
+    },
+    {
+      "name": "Bioenergy",
+      "subcategories": [
+        "Agricultural Biomass",
+        "Biogas Systems",
+        "Biofuels",
+        "Waste-to-Energy"
+      ]
+    },
+    {
+      "name": "Energy Storage & Grid Infrastructure",
+      "subcategories": [
+        "Battery Storage Systems",
+        "Grid Infrastructure & Challenges",
+        "Alternative Storage Technologies"
+      ]
+    },
+    {
+      "name": "Electric Vehicles & Clean Transport",
+      "subcategories": [
+        "Buying & Owning an EV",
+        "EV Charging Infrastructure",
+        "Thailand's EV Industry"
+      ]
+    },
+    {
+      "name": "Green Buildings & Energy Efficiency",
+      "subcategories": [
+        "Practical Energy Efficiency",
+        "District Cooling Systems",
+        "Certification & Standards"
+      ]
+    },
+    {
+      "name": "Policy, Economics & Thailand Context",
+      "subcategories": [
+        "Incentives, Subsidies & Tax Breaks",
+        "Electricity Pricing & Economics",
+        "National Energy Goals & Plans",
+        "Regional Energy Landscapes",
+        "Community & Cooperative Energy"
+      ]
+    }
+  ]
+}

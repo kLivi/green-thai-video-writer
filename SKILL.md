@@ -1,0 +1,387 @@
+---
+name: get-video
+description: >
+  Green Energy Thailand Video Writer — takes a YouTube URL, extracts the
+  transcript, analyzes for key data, proposes an article angle for approval,
+  then writes and publishes a WordPress draft for greenenergythailand.com.
+  Adds Thai context (permits, rates, incentives) beyond what the video covers.
+  Use when user says "get video", "/get-video", or provides a YouTube URL
+  to turn into an article.
+user-invocable: true
+argument-hint: '"https://youtube.com/watch?v=..."'
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - WebSearch
+  - Glob
+---
+
+# Green Thai Video Writer
+
+Turn a YouTube video about green energy in Thailand into a published WordPress draft.
+
+## Workflow
+
+### Step 1 — Load context
+
+All commands run from the project root:
+```bash
+cd /home/unify/Documents/green-energy-thailand/green-thai-video-writer
+```
+
+Read these files before starting:
+- `prompts/extract-video-data.md` — data extraction rules
+- `prompts/thai-context.md` — Thai enhancement context
+- `prompts/video-article-template.md` — article structure
+- `prompts/content-rules.md` — writing persona and quality rules
+- `prompts/visual-media.md` — image generation rules
+- `prompts/chart-rules.md` — SVG chart rules
+- `src/config/categories.json` — available pillars and subcategories
+
+### Step 2 — Fetch transcript
+
+Extract the transcript from the YouTube URL using yt-dlp.
+
+**Try auto-generated subtitles first (English, then Thai):**
+```bash
+yt-dlp --js-runtimes node --write-auto-sub --sub-lang "en,th" --sub-format "vtt" --skip-download -o "/tmp/yt-transcript" "{URL}"
+```
+
+If that produces a VTT file, convert it to clean text:
+```bash
+python3 -c "
+import re, sys
+
+with open('/tmp/yt-transcript.en.vtt', 'r') as f:
+    content = f.read()
+
+# Remove VTT header and timestamps
+lines = content.split('\n')
+text_lines = []
+seen = set()
+for line in lines:
+    line = line.strip()
+    # Skip headers, timestamps, position tags
+    if not line or line.startswith('WEBVTT') or line.startswith('Kind:') or line.startswith('Language:') or '-->' in line or line.isdigit():
+        continue
+    # Remove HTML tags
+    clean = re.sub(r'<[^>]+>', '', line)
+    if clean and clean not in seen:
+        seen.add(clean)
+        text_lines.append(clean)
+
+transcript = ' '.join(text_lines)
+print(transcript)
+" > /tmp/yt-transcript-clean.txt
+```
+
+If English subtitles aren't available, try Thai (`.th.vtt`) and note that the transcript is in Thai.
+
+**If no subtitles at all**, try extracting audio description or inform the user:
+"No transcript available for this video. Options: (1) provide a manual transcript, (2) try a different video."
+
+Read the clean transcript and assess its quality:
+- Is it long enough to extract meaningful data? (minimum ~200 words)
+- Is it in English or Thai?
+- Does it contain technical/financial data?
+
+Also fetch video metadata:
+```bash
+yt-dlp --js-runtimes node --dump-json --skip-download "{URL}" 2>/dev/null | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+print(f\"Title: {data.get('title', 'Unknown')}\")
+print(f\"Channel: {data.get('channel', data.get('uploader', 'Unknown'))}\")
+print(f\"Duration: {data.get('duration_string', 'Unknown')}\")
+print(f\"Views: {data.get('view_count', 'Unknown')}\")
+print(f\"Upload date: {data.get('upload_date', 'Unknown')}\")
+print(f\"Description: {data.get('description', '')[:500]}\")
+print(f\"Thumbnail: {data.get('thumbnail', '')}\")
+"
+```
+
+### Step 3 — Extract data and propose article
+
+Using the rules in `prompts/extract-video-data.md`, extract structured data from the transcript.
+
+Then, using `src/config/categories.json`, determine:
+- **Category**: best matching pillar and subcategory
+- **Article title**: following the format in `prompts/video-article-template.md`
+- **Article angle**: what unique value this article adds beyond the video
+- **Key data points**: the most interesting numbers/facts extracted
+- **Credibility rating**: high/medium/low based on extraction rules
+
+Present this as a **proposal for approval**:
+
+```
+═══════════════════════════════════════════
+📹 VIDEO ARTICLE PROPOSAL
+═══════════════════════════════════════════
+
+Video: [title] by [channel]
+URL: [url]
+Duration: [duration] | Views: [views]
+
+Category: [pillar] → [subcategory]
+Credibility: [High/Medium/Low]
+
+PROPOSED TITLE:
+[title]
+
+ANGLE:
+[1-2 sentences on what value this article adds]
+
+KEY DATA EXTRACTED:
+• [data point 1]
+• [data point 2]
+• [data point 3]
+...
+
+PROPOSED OUTLINE:
+1. TL;DR
+2. Video Embed
+3. [H2 section] — [what it covers]
+4. [H2 section] — [what it covers]
+5. [H2 section] — [what it covers]
+...
+N. Key Takeaways
+N+1. FAQ
+
+THAI CONTEXT TO ADD:
+• [context point 1]
+• [context point 2]
+
+═══════════════════════════════════════════
+Approve? (yes / suggest changes / skip)
+═══════════════════════════════════════════
+```
+
+**STOP HERE AND WAIT FOR USER APPROVAL.**
+
+Do not proceed until the user responds with:
+- **"yes"** or similar → proceed to Step 4
+- **Suggested changes** → revise the proposal and present again
+- **"skip"** → abort this video, report skipped
+
+### Step 4 — Research supplementary context
+
+Based on the article angle, run 2-4 targeted WebSearch queries to fill gaps:
+- Current Thai regulations/rates relevant to the project type
+- Comparable project costs for context
+- Any claims in the video that need verification
+
+Focus on Thailand-specific, recent (2024-2026) sources.
+
+### Step 5 — Write article
+
+Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
+
+- Follow the approved outline exactly
+- Open with TL;DR box
+- Embed the YouTube video after TL;DR
+- Answer-first H2 openings
+- Clearly attribute information to the video ("According to [channel]...", "The video shows...")
+- Enhance with Thai context from `prompts/thai-context.md` and Step 4 research
+- Cite all external statistics inline with source name, year, and hyperlink
+- Include FAQ section
+- Target 1500-2500 words
+
+**Image markers:** Place `[IMAGE: description]` markers (3-5 total, 1 cover + 2-4 inline).
+**Chart markers:** Place `[CHART: ...]` markers where data supports visualization (0-2 per article).
+
+Output the full article HTML:
+```bash
+mkdir -p output
+# Write to output/{slug}.html
+```
+
+Wrap in a full HTML document (required by wordpress_upload.py):
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{title}</title>
+  <meta name="description" content="{meta_description}">
+  <meta name="keywords" content="{focus_keyword}">
+  <meta name="author" content="Green Energy Thailand">
+  <meta name="date" content="{YYYY-MM-DD}">
+</head>
+<body>
+<article>
+<h1>{title}</h1>
+{article_html}
+</article>
+</body>
+</html>
+```
+
+### Step 5b — Generate charts
+
+For each `[CHART: ...]` marker, generate an inline SVG chart following `prompts/chart-rules.md`.
+
+1. Parse chart type, title, data, source from the marker
+2. Generate SVG using approved styling (currentColor, transparent bg, approved palette)
+3. Wrap in `<figure>`
+4. Replace the `[CHART]` marker in the HTML
+
+Verify each chart:
+- No hardcoded text colors (all `currentColor`)
+- No white/light backgrounds
+- Source attribution at bottom
+- `role="img"` and `aria-label` on `<svg>`
+- `<title>` and `<desc>` inside `<svg>`
+
+If no `[CHART]` markers exist, skip this step.
+
+### Step 6 — Generate images
+
+Generate AI images for each `[IMAGE: ...]` marker using fal.ai Seedream v4.5.
+Follow the rules in `prompts/visual-media.md`.
+
+#### 6a: Generate prompts
+
+For each `[IMAGE]` marker, write a generation prompt:
+- Describe what a person standing there would actually see and photograph
+- Keep under 25 words
+- Append `, Thailand, natural lighting, candid photo, realistic`
+- One clear subject per image — every image must have completely different content
+- No text, labels, or writing in prompts
+- Max 1-2 images with people; rest should be objects/environments
+
+Assign dimensions:
+| Image | Width | Height | When to Use |
+|-------|-------|--------|-------------|
+| Cover/featured | 1200 | 630 | First `[IMAGE]` marker |
+| Inline landscape | 650 | 366 | Wide scenes |
+| Inline portrait | 450 | 600 | Tall subjects |
+| Inline square | 550 | 550 | Close-ups |
+
+Vary dimensions across the article. Include at least one portrait.
+
+#### 6b: Submit to fal.ai
+
+```bash
+export IMAGE_API_KEY=$(grep IMAGE_API_KEY /home/unify/Documents/green-energy-thailand/green-thai-video-writer/.env | cut -d= -f2)
+```
+
+For each prompt:
+```bash
+curl -s -X POST "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/text-to-image" \
+  -H "Authorization: Key $IMAGE_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"[prompt]","image_size":{"width":WIDTH,"height":HEIGHT},"num_images":1}'
+```
+
+Submit ALL jobs before polling.
+
+#### 6c: Poll and download
+
+Poll each `status_url` every 5 seconds until `COMPLETED`:
+```bash
+curl -s "$STATUS_URL" -H "Authorization: Key $IMAGE_API_KEY"
+```
+
+Retrieve result:
+```bash
+curl -s "$RESPONSE_URL" -H "Authorization: Key $IMAGE_API_KEY"
+```
+
+Image URL in `images[0].url`.
+
+#### 6d: Resize and convert to WebP
+
+```bash
+mkdir -p output/images
+curl -s "[fal.media URL]" -o /tmp/img_raw.png
+python3 -c "
+from PIL import Image
+img = Image.open('/tmp/img_raw.png')
+img = img.resize((TARGET_W, TARGET_H), Image.Resampling.LANCZOS)
+img.save('output/images/{slug}-{descriptor}.webp', 'WEBP', quality=82)
+"
+```
+
+Naming: `{slug}-featured.webp` for cover, `{slug}-{descriptor}.webp` for inline.
+
+#### 6e: Replace markers in HTML
+
+Replace each `[IMAGE: ...]` with:
+```html
+<figure>
+  <img src="images/{slug}-{descriptor}.webp"
+       alt="Descriptive alt text — full sentence, 10-125 chars"
+       width="WIDTH" height="HEIGHT" loading="lazy">
+</figure>
+```
+
+For cover image, add: `<!-- coverImage: images/{slug}-featured.webp -->`
+
+### Step 7 — Publish to WordPress
+
+```bash
+cd /home/unify/Documents/green-energy-thailand/green-thai-video-writer
+python3 scripts/wordpress_upload.py output/{slug}.html --images output/images --category "{pillar from Step 3}"
+```
+
+### Step 8 — Report
+
+Report to the user:
+- WordPress post ID and edit URL
+- Article title and slug
+- Word count
+- Category assigned
+- Video URL and channel credited
+- Number of images generated and uploaded
+- Number of charts generated
+- Credibility rating from Step 3
+- Any quality concerns to address before publishing
+
+## Queue Processing
+
+If invoked with `queue` instead of a URL:
+
+```bash
+# Find next unprocessed URL
+URL=$(grep -v '^#' queue/video-queue.txt | grep -v '^DONE:' | grep -v '^SKIP:' | head -1)
+```
+
+Process it, then mark as done:
+```bash
+sed -i "s|^${URL}$|DONE: ${URL}|" queue/video-queue.txt
+```
+
+If skipped by user, mark as:
+```bash
+sed -i "s|^${URL}$|SKIP: ${URL}|" queue/video-queue.txt
+```
+
+## Error Handling
+
+**No transcript available:** Tell the user. Offer to try with a manually provided transcript.
+
+**Transcript too short (<200 words):** Warn the user that the article may be thin. Proceed if they approve.
+
+**WP upload fails:** Try `--dry-run` first. Check `.env` credentials.
+
+**Image generation fails:** Skip that image, remove the marker. Article can publish without images.
+
+**IMAGE_API_KEY not set:** Skip image generation entirely. Publish text-only and note it.
+
+**Video not about green energy/Thailand:** Flag in the proposal (Step 3). Let the user decide.
+
+## Quality Checklist (before publishing)
+
+- [ ] No fabricated statistics
+- [ ] Video properly attributed (channel name, link)
+- [ ] YouTube embed present
+- [ ] TL;DR box present
+- [ ] Answer-first H2 openings
+- [ ] FAQ section at end
+- [ ] Word count 1500-2500
+- [ ] Thai context adds genuine value (not padding)
+- [ ] Charts use currentColor, transparent bg, source attribution
+- [ ] 3-5 images (1 cover + 2-4 inline), all WebP
+- [ ] Cover named `{slug}-featured.webp`
+- [ ] Alt text on every image
+- [ ] No anti-patterns from content-rules.md
