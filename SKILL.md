@@ -98,7 +98,23 @@ print(f\"Views: {data.get('view_count', 'Unknown')}\")
 print(f\"Upload date: {data.get('upload_date', 'Unknown')}\")
 print(f\"Description: {data.get('description', '')[:500]}\")
 print(f\"Thumbnail: {data.get('thumbnail', '')}\")
+embed = data.get('playable_in_embed', True)
+print(f\"Embeddable: {embed}\")
+if not embed:
+    print('⚠️  VIDEO EMBEDDING DISABLED — use linked thumbnail instead of iframe')
 "
+```
+
+**Embed check:** If `playable_in_embed` is `False`, the video cannot be embedded via iframe. In Step 5, use a linked thumbnail instead:
+```html
+<div class="video-embed">
+  <a href="https://www.youtube.com/watch?v={VIDEO_ID}" target="_blank" rel="noopener">
+    <img src="https://i.ytimg.com/vi/{VIDEO_ID}/hqdefault.jpg"
+         alt="Watch: {video title} by {channel} on YouTube"
+         width="560" height="315" style="display:block; border-radius:8px;" loading="lazy">
+  </a>
+  <p><a href="https://www.youtube.com/watch?v={VIDEO_ID}" target="_blank" rel="noopener">▶ Watch the full video on YouTube</a> — "{video title}" by {channel} ({duration})</p>
+</div>
 ```
 
 ### Step 3 — Extract data and propose article

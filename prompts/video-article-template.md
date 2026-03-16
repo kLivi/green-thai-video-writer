@@ -15,13 +15,27 @@ Examples:
 
 1. **TL;DR box** — 2-3 sentences: what the video shows, the key numbers, and the main takeaway.
 
-2. **Video Embed** — YouTube embed iframe right after TL;DR:
+2. **Video Embed** — Right after TL;DR. Check `playable_in_embed` from Step 2 metadata.
+
+   **If embeddable** — use iframe:
    ```html
    <div class="video-embed">
      <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/{VIDEO_ID}" 
-       title="{video title}" frameborder="0" 
+       title="{video title}" style="border:none"
        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
        allowfullscreen loading="lazy"></iframe>
+   </div>
+   ```
+
+   **If NOT embeddable** — use linked thumbnail:
+   ```html
+   <div class="video-embed">
+     <a href="https://www.youtube.com/watch?v={VIDEO_ID}" target="_blank" rel="noopener">
+       <img src="https://i.ytimg.com/vi/{VIDEO_ID}/hqdefault.jpg"
+            alt="Watch: {video title} by {channel} on YouTube"
+            width="560" height="315" style="display:block; border-radius:8px;" loading="lazy">
+     </a>
+     <p><a href="https://www.youtube.com/watch?v={VIDEO_ID}" target="_blank" rel="noopener">▶ Watch the full video on YouTube</a> — "{video title}" by {channel} ({duration})</p>
    </div>
    ```
 
