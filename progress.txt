@@ -1,0 +1,32 @@
+## 2026-03-16 — Codebase audit & dependency updates
+
+### Audit & fixes
+- `_html_decode()` → `html.unescape()`: Replaced manual 3-entity decoder with Python stdlib `html.unescape()`, which handles all HTML entities.
+- `Image.LANCZOS` → `Image.Resampling.LANCZOS`: Updated Pillow resize calls in `SKILL.md` and `prompts/visual-media.md` to use the modern enum form.
+- content-rules.md HTML Output section: Fixed contradiction with SKILL.md Step 5 and `wordpress_upload.py`. Now aligned with actual pipeline behavior.
+- Git repo initialized and pushed to GitHub (https://github.com/kLivi/green-thai-video-writer).
+
+### Audit findings not yet addressed
+- Step counter mismatch in `wordpress_upload.py`: Steps 1-5 say `/7` but steps 6-7 say `/8` (cosmetic).
+- Global SSL warning suppression: `urllib3.disable_warnings()` at module level suppresses warnings for all requests, not just the staging domain.
+- `frameborder="0"` on YouTube iframe in `prompts/video-article-template.md` is deprecated in HTML5 (use `style="border:none"`).
+- SPEC.md describes a TypeScript project structure that was never built.
+
+## 2026-03-16 — wordpress_upload.py fixes
+
+### Category mapping
+- `derive_category()` now returns `(pillar, subcategory)` matching actual WordPress taxonomy (queried from live site). Old mapping had wrong names (e.g. "Wind Energy" → corrected to "Wind Power").
+- `get_or_create_category()` → renamed to `find_category()`. Only looks up existing categories; warns if not found.
+- Subcategory support: Posts now get assigned both pillar and subcategory IDs.
+
+### RankMath
+- SEO meta fields removed from WP REST API `post.meta` (RankMath blocks it). Now set via RankMath's own `/wp-json/rankmath/v1/updateMeta` endpoint after post creation.
+
+### categories.json
+- Updated to match actual WordPress taxonomy names (e.g. "Installation, Permits & Grid Connection" not "Solar Installation & Permits").
+
+## 2026-03-16 — First article published
+
+- Video: "Thailand: Renewable Energy Revolution" (ADB Partnerships) → WP draft ID 434
+- Category: Policy, Economics & Thailand Context → National Energy Goals & Plans
+- 4 images, 2 SVG charts, ~2,100 words

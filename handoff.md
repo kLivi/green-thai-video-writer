@@ -120,19 +120,4 @@ green-thai-video-writer/
 - `~/Documents/green-energy-thailand/claude-blog/` — Reference implementation
 - Target site: greenenergythailand.com
 
-## Changes (2026-03-16)
 
-### Codebase audit & dependency updates
-- **`_html_decode()` → `html.unescape()`**: Replaced manual 3-entity decoder with Python stdlib `html.unescape()`, which handles all HTML entities.
-- **`Image.LANCZOS` → `Image.Resampling.LANCZOS`**: Updated Pillow resize calls in `SKILL.md` and `prompts/visual-media.md` to use the modern enum form.
-- **content-rules.md HTML Output section**: Fixed contradiction with SKILL.md Step 5 and `wordpress_upload.py`. Now aligned with actual pipeline behavior.
-- **Git repo initialized** and pushed to GitHub.
-
-### wordpress_upload.py (earlier session)
-- **Category mapping fixed**: `derive_category()` returns `(pillar, subcategory)` matching actual WordPress taxonomy.
-- **Never creates categories**: `find_category()` only looks up existing categories.
-- **RankMath fix**: SEO meta set via `/wp-json/rankmath/v1/updateMeta` endpoint after post creation.
-- **Subcategory support**: Posts assigned both pillar and subcategory IDs.
-
-### categories.json
-- Updated to match actual WordPress taxonomy names.
