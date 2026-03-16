@@ -1,11 +1,51 @@
-# Green Thai Video Writer
+# Project overview
 
-**Status:** Live — first article published as WP draft
-**Last Updated:** 2026-03-16
+YouTube-to-WordPress article pipeline for greenenergythailand.com. Takes a YouTube URL, extracts the transcript via yt-dlp, analyzes for key data, proposes an article angle for user approval, enhances with Thai context (permits, rates, incentives), generates images and charts, then publishes as a WordPress draft with full SEO metadata.
 
-## What This Is
+## Tech stack
 
-Pipeline 2: Takes a YouTube URL → extracts transcript → analyzes for key data → proposes article angle for user approval → enhances with Thai context → writes article → generates images and charts → publishes as WordPress draft.
+- **Language**: Python 3.12+
+- **Upload script**: requests, BeautifulSoup 4, Pillow (WordPress REST API + RankMath API)
+- **Transcript**: yt-dlp CLI (auto-generated subtitles)
+- **Image generation**: fal.ai Seedream v4.5 API
+- **Image processing**: Pillow (resize + WebP conversion)
+- **Charts**: Inline SVG (dark-mode compatible, currentColor)
+- **SEO**: RankMath REST API, JSON-LD schema (@graph with BlogPosting, FAQPage, BreadcrumbList)
+- **Orchestrator**: Claude Code skill (SKILL.md)
+- **CMS**: WordPress (Cloudways) via REST API
+
+## Git Status
+
+Working Directory: /home/unify/Documents/green-energy-thailand/green-thai-video-writer
+Current Branch: master
+Remote: origin → https://github.com/kLivi/green-thai-video-writer.git
+
+### What Versions to Keep
+✅ CURRENT/KEEP: master branch — all changes pushed
+✅ CURRENT/KEEP: .env symlink → ../green-thai-idea-writer/.env (shared credentials)
+❌ OLD/IGNORE: SPEC.md — describes a TypeScript project that was never built (project is a Claude Code skill + Python script)
+
+## Current status
+
+**Pipeline working end-to-end.** First article published as WP draft (Post ID 434). Pipeline: transcript extraction → data analysis → user approval gate → article writing → image generation → chart generation → WordPress upload with RankMath SEO, schema JSON-LD, and category assignment.
+
+**Codebase audit completed (2026-03-16):**
+- Dependencies updated: `html.unescape()` replaces manual decoder, `Image.Resampling.LANCZOS` replaces old constant
+- content-rules.md HTML Output section aligned with SKILL.md and upload script
+- 4 minor findings documented but not yet addressed (step counter, SSL warnings, frameborder, stale SPEC.md)
+
+**First article published:**
+- Video: "Thailand: Renewable Energy Revolution" (ADB Partnerships) → WP draft ID 434
+- Category: Policy, Economics & Thailand Context → National Energy Goals & Plans
+- 4 images, 2 SVG charts, ~2,100 words
+
+## Active step
+
+1. Process more videos from the queue (`queue/video-queue.txt`) or `get-yt-vid-ideas.csv`
+2. Simplify `wordpress_upload.py` — category keyword mapping is long; consider loading from `categories.json` instead of hardcoding
+3. Install a Python linter (ruff) and add to `/commit` quality checks
+4. Clean up orphaned media in WP from failed upload attempts (IDs 425–428)
+5. Fix remaining audit findings: step counter mismatch, scoped SSL warning suppression, deprecated `frameborder` attribute
 
 ## How to Use
 
@@ -27,13 +67,6 @@ After transcript extraction and data analysis, the skill presents a proposal:
 - Outline
 
 **You must approve before the article is written.** You can approve, suggest changes, or skip.
-
-## Next Steps
-
-- Simplify `wordpress_upload.py` — the category keyword mapping is long; consider loading from `categories.json` instead of hardcoding
-- Install a Python linter (ruff) and add to `/commit` quality checks
-- Clean up orphaned media in WP from failed upload attempts (IDs 425–428)
-- Process more videos from the queue or `get-yt-vid-ideas.csv`
 
 ## Installation
 
@@ -72,7 +105,7 @@ green-thai-video-writer/
 ├── install.sh                # Deploy skill to ~/.claude/skills/
 ├── curated-videos.md         # Hand-picked videos by topic
 ├── get-yt-vid-ideas.csv      # 218 video URLs (raw pool)
-└── SPEC.md                   # Original spec (reference)
+└── SPEC.md                   # Original spec (historical — describes unbuilt TS project)
 ```
 
 ## Video Sources
@@ -87,41 +120,19 @@ green-thai-video-writer/
 - `~/Documents/green-energy-thailand/claude-blog/` — Reference implementation
 - Target site: greenenergythailand.com
 
-## Repository
-
-**GitHub:** https://github.com/kLivi/green-thai-video-writer
-
 ## Changes (2026-03-16)
 
 ### Codebase audit & dependency updates
-- **`_html_decode()` → `html.unescape()`**: Replaced manual 3-entity decoder with Python stdlib `html.unescape()`, which handles all HTML entities. Fixes potential mismatches on WordPress category names containing entities beyond `&amp;`, `&#038;`, `&#8217;`.
-- **`Image.LANCZOS` → `Image.Resampling.LANCZOS`**: Updated Pillow resize calls in `SKILL.md` and `prompts/visual-media.md` to use the modern enum form (canonical since Pillow 9.1).
-- **content-rules.md HTML Output section**: Fixed contradiction — old text said "no `<html>`, `<head>`, `<body>` tags" but SKILL.md Step 5 and `wordpress_upload.py` both require a full HTML document with `<head>` metadata. Now aligned with actual pipeline behavior.
+- **`_html_decode()` → `html.unescape()`**: Replaced manual 3-entity decoder with Python stdlib `html.unescape()`, which handles all HTML entities.
+- **`Image.LANCZOS` → `Image.Resampling.LANCZOS`**: Updated Pillow resize calls in `SKILL.md` and `prompts/visual-media.md` to use the modern enum form.
+- **content-rules.md HTML Output section**: Fixed contradiction with SKILL.md Step 5 and `wordpress_upload.py`. Now aligned with actual pipeline behavior.
 - **Git repo initialized** and pushed to GitHub.
 
-### Audit findings not yet addressed
-- **Step counter mismatch** in `wordpress_upload.py`: Steps 1-5 say `/7` but steps 6-7 say `/8` (cosmetic).
-- **Global SSL warning suppression**: `urllib3.disable_warnings()` at module level suppresses warnings for all requests, not just the staging domain. `session.verify = False` is correctly scoped but the warning filter isn't.
-- **`frameborder="0"`** on YouTube iframe in `prompts/video-article-template.md` is deprecated in HTML5 (use `style="border:none"`).
-- **SPEC.md** describes a TypeScript project structure that was never built — the project is a Claude Code skill + Python script. Consider removing or marking as historical.
-
 ### wordpress_upload.py (earlier session)
-- **Category mapping fixed**: `derive_category()` now returns `(pillar, subcategory)` matching the actual WordPress taxonomy (queried from the live site). Old mapping had wrong names (e.g. "Wind Energy" → corrected to "Wind Power").
-- **Never creates categories**: `get_or_create_category()` → renamed to `find_category()`. Only looks up existing categories; warns if not found.
-- **RankMath fix**: SEO meta fields removed from WP REST API `post.meta` (RankMath blocks it). Now set via RankMath's own `/wp-json/rankmath/v1/updateMeta` endpoint after post creation.
-- **Subcategory support**: Posts now get assigned both the pillar and subcategory IDs.
+- **Category mapping fixed**: `derive_category()` returns `(pillar, subcategory)` matching actual WordPress taxonomy.
+- **Never creates categories**: `find_category()` only looks up existing categories.
+- **RankMath fix**: SEO meta set via `/wp-json/rankmath/v1/updateMeta` endpoint after post creation.
+- **Subcategory support**: Posts assigned both pillar and subcategory IDs.
 
 ### categories.json
-- Updated to match actual WordPress taxonomy names (e.g. "Installation, Permits & Grid Connection" not "Solar Installation & Permits").
-
-### First article published
-- Video: "Thailand: Renewable Energy Revolution" (ADB Partnerships) → WP draft ID 434
-- Category: Policy, Economics & Thailand Context → National Energy Goals & Plans
-- 4 images, 2 SVG charts, ~2,100 words
-
-## Dependencies
-
-- Python 3.12+ with: requests, beautifulsoup4, pillow, yt-dlp
-- yt-dlp CLI (for transcript extraction)
-- fal.ai API key (for image generation)
-- WordPress Application Password (for draft publishing)
+- Updated to match actual WordPress taxonomy names.
