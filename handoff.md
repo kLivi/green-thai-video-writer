@@ -87,14 +87,29 @@ green-thai-video-writer/
 - `~/Documents/green-energy-thailand/claude-blog/` — Reference implementation
 - Target site: greenenergythailand.com
 
+## Repository
+
+**GitHub:** https://github.com/kLivi/green-thai-video-writer
+
 ## Changes (2026-03-16)
 
-### wordpress_upload.py
+### Codebase audit & dependency updates
+- **`_html_decode()` → `html.unescape()`**: Replaced manual 3-entity decoder with Python stdlib `html.unescape()`, which handles all HTML entities. Fixes potential mismatches on WordPress category names containing entities beyond `&amp;`, `&#038;`, `&#8217;`.
+- **`Image.LANCZOS` → `Image.Resampling.LANCZOS`**: Updated Pillow resize calls in `SKILL.md` and `prompts/visual-media.md` to use the modern enum form (canonical since Pillow 9.1).
+- **content-rules.md HTML Output section**: Fixed contradiction — old text said "no `<html>`, `<head>`, `<body>` tags" but SKILL.md Step 5 and `wordpress_upload.py` both require a full HTML document with `<head>` metadata. Now aligned with actual pipeline behavior.
+- **Git repo initialized** and pushed to GitHub.
+
+### Audit findings not yet addressed
+- **Step counter mismatch** in `wordpress_upload.py`: Steps 1-5 say `/7` but steps 6-7 say `/8` (cosmetic).
+- **Global SSL warning suppression**: `urllib3.disable_warnings()` at module level suppresses warnings for all requests, not just the staging domain. `session.verify = False` is correctly scoped but the warning filter isn't.
+- **`frameborder="0"`** on YouTube iframe in `prompts/video-article-template.md` is deprecated in HTML5 (use `style="border:none"`).
+- **SPEC.md** describes a TypeScript project structure that was never built — the project is a Claude Code skill + Python script. Consider removing or marking as historical.
+
+### wordpress_upload.py (earlier session)
 - **Category mapping fixed**: `derive_category()` now returns `(pillar, subcategory)` matching the actual WordPress taxonomy (queried from the live site). Old mapping had wrong names (e.g. "Wind Energy" → corrected to "Wind Power").
 - **Never creates categories**: `get_or_create_category()` → renamed to `find_category()`. Only looks up existing categories; warns if not found.
 - **RankMath fix**: SEO meta fields removed from WP REST API `post.meta` (RankMath blocks it). Now set via RankMath's own `/wp-json/rankmath/v1/updateMeta` endpoint after post creation.
 - **Subcategory support**: Posts now get assigned both the pillar and subcategory IDs.
-- **HTML entity decoding**: Category name comparison decodes `&amp;` before matching.
 
 ### categories.json
 - Updated to match actual WordPress taxonomy names (e.g. "Installation, Permits & Grid Connection" not "Solar Installation & Permits").
