@@ -174,6 +174,10 @@ def parse_article(html_path: Path) -> dict:
         # Derive from first H2 or title
         meta["focus_keyword"] = _derive_focus_keyword(meta["title"])
 
+    # Article type (seo / support)
+    at_tag = soup.find("meta", attrs={"name": "article-type"})
+    meta["article_type"] = at_tag["content"] if at_tag and at_tag.get("content") else "support"
+
     # Schema JSON-LD
     schema_tag = soup.find("script", attrs={"type": "application/ld+json"})
     meta["schema"] = schema_tag.string.strip() if schema_tag and schema_tag.string else ""
@@ -1088,6 +1092,19 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
     else:
         print("Failed to create draft. Check errors above.")
     print(f"{'=' * 60}\n")
+
+    # Trigger internal linking pipeline for new posts
+    if post:
+        result_id = post.get("id")
+        if result_id and result_id != 0:  # Not dry-run
+            try:
+                sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "get-internal-linking"))
+                from pipeline import run_new_post_mode
+                print("\n[Internal Linking] Generating link suggestions...")
+                run_new_post_mode(post_id=result_id, article_type=meta.get("article_type", "support"))
+                print("  Review suggestions at: http://localhost:8501")
+            except Exception as e:
+                print(f"  [Internal Linking] Skipped: {e}")
 
     return post
 

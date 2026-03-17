@@ -30,3 +30,10 @@
 - Video: "Thailand: Renewable Energy Revolution" (ADB Partnerships) → WP draft ID 434
 - Category: Policy, Economics & Thailand Context → National Energy Goals & Plans
 - 4 images, 2 SVG charts, ~2,100 words
+
+## 2026-03-16 — Internal linking integration (from get-internal-linking session)
+
+**Changes made (uncommitted):**
+- `scripts/wordpress_upload.py` — added internal linking hook (auto-triggers `run_new_post_mode` after upload), added article-type meta parsing
+- `SKILL.md` — added `<meta name="article-type" content="support">` to HTML template, added pillar phrase requirement (articles must mention pillar topic phrase for upward links)
+- `src/config/categories.json` — added `pillar_phrases` field to each pillar

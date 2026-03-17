@@ -2,6 +2,7 @@
   "pillars": [
     {
       "name": "Solar Energy",
+      "pillar_phrases": ["solar energy", "solar power"],
       "subcategories": [
         "Solar Costs & Financing",
         "Installation, Permits & Grid Connection",
@@ -11,6 +12,7 @@
     },
     {
       "name": "Wind Power",
+      "pillar_phrases": ["wind energy", "wind power"],
       "subcategories": [
         "Onshore Wind Farms",
         "Offshore Wind & Future Development",
@@ -19,6 +21,7 @@
     },
     {
       "name": "Hydroelectric Power",
+      "pillar_phrases": ["hydroelectric power", "hydropower"],
       "subcategories": [
         "Large Dams & Major Projects",
         "Small-Scale & Micro Hydro",
@@ -28,6 +31,7 @@
     },
     {
       "name": "Bioenergy",
+      "pillar_phrases": ["bioenergy", "biogas"],
       "subcategories": [
         "Agricultural Biomass",
         "Biogas Systems",
@@ -37,6 +41,7 @@
     },
     {
       "name": "Energy Storage & Grid Infrastructure",
+      "pillar_phrases": ["energy storage", "battery storage"],
       "subcategories": [
         "Battery Storage Systems",
         "Grid Infrastructure & Challenges",
@@ -45,6 +50,7 @@
     },
     {
       "name": "Electric Vehicles & Clean Transport",
+      "pillar_phrases": ["electric vehicles", "EV"],
       "subcategories": [
         "Buying & Owning an EV",
         "EV Charging Infrastructure",
@@ -53,6 +59,7 @@
     },
     {
       "name": "Green Buildings & Energy Efficiency",
+      "pillar_phrases": ["green building", "energy efficiency"],
       "subcategories": [
         "Practical Energy Efficiency",
         "District Cooling Systems",
@@ -61,6 +68,7 @@
     },
     {
       "name": "Policy, Economics & Thailand Context",
+      "pillar_phrases": ["energy policy", "renewable energy policy"],
       "subcategories": [
         "Incentives, Subsidies & Tax Breaks",
         "Electricity Pricing & Economics",

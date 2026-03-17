@@ -202,6 +202,7 @@ Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
 - Cite all external statistics inline with source name, year, and hyperlink
 - Include FAQ section
 - Target 1500-2500 words
+- **Pillar phrase requirement:** The article MUST use at least one of the pillar's `pillar_phrases` from `src/config/categories.json` naturally in the body text. This enables the internal linking pipeline to create upward links to the pillar page. Check the chosen pillar's phrases and weave one in — e.g., for a Solar Energy article, use "solar energy" or "solar power" at least once.
 
 **Image markers:** Place `[IMAGE: description]` markers (3-5 total, 1 cover + 2-4 inline).
 **Chart markers:** Place `[CHART: ...]` markers where data supports visualization (0-2 per article).
@@ -222,6 +223,7 @@ Wrap in a full HTML document (required by wordpress_upload.py):
   <meta name="keywords" content="{focus_keyword}">
   <meta name="author" content="Green Energy Thailand">
   <meta name="date" content="{YYYY-MM-DD}">
+  <meta name="article-type" content="support">
 </head>
 <body>
 <article>
