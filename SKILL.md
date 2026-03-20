@@ -2,8 +2,9 @@
 name: get-video
 description: >
   Green Energy Thailand Video Writer — takes a YouTube URL, extracts the
-  transcript, analyzes for key data, proposes an article angle for approval,
-  then writes and publishes a WordPress draft for greenenergythailand.com.
+  transcript, analyzes for key data, writes and publishes a WordPress draft
+  for greenenergythailand.com. Vetted queue videos run end-to-end automatically;
+  manual URLs pause for approval after analysis.
   Adds Thai context (permits, rates, incentives) beyond what the video covers.
   Use when user says "get video", "/get-video", or provides a YouTube URL
   to turn into an article.
@@ -128,57 +129,15 @@ Then, using `src/config/categories.json`, determine:
 - **Key data points**: the most interesting numbers/facts extracted
 - **Credibility rating**: high/medium/low based on extraction rules
 
-Present this as a **proposal for approval**:
+**If this video came from the vetted queue** (`VETTED:`, `VETTED-RESEARCH:`, or `VETTED-SERIES:`):
+- Log the proposal summary (title, category, angle, key data) for the record but **do not pause for approval** — proceed directly to Step 4.
 
-```
-═══════════════════════════════════════════
-📹 VIDEO ARTICLE PROPOSAL
-═══════════════════════════════════════════
-
-Video: [title] by [channel]
-URL: [url]
-Duration: [duration] | Views: [views]
-
-Category: [pillar] → [subcategory]
-Credibility: [High/Medium/Low]
-
-PROPOSED TITLE:
-[title]
-
-ANGLE:
-[1-2 sentences on what value this article adds]
-
-KEY DATA EXTRACTED:
-• [data point 1]
-• [data point 2]
-• [data point 3]
-...
-
-PROPOSED OUTLINE:
-1. TL;DR
-2. Video Embed
-3. [H2 section] — [what it covers]
-4. [H2 section] — [what it covers]
-5. [H2 section] — [what it covers]
-...
-N. Key Takeaways
-N+1. FAQ
-
-THAI CONTEXT TO ADD:
-• [context point 1]
-• [context point 2]
-
-═══════════════════════════════════════════
-Approve? (yes / suggest changes / skip)
-═══════════════════════════════════════════
-```
-
-**STOP HERE AND WAIT FOR USER APPROVAL.**
-
-Do not proceed until the user responds with:
-- **"yes"** or similar → proceed to Step 4
-- **Suggested changes** → revise the proposal and present again
-- **"skip"** → abort this video, report skipped
+**If this video was provided as a manual URL** (not from the queue):
+- Present the proposal and **STOP HERE AND WAIT FOR USER APPROVAL.**
+- Do not proceed until the user responds with:
+  - **"yes"** or similar → proceed to Step 4
+  - **Suggested changes** → revise the proposal and present again
+  - **"skip"** → abort this video, report skipped
 
 ### Step 4 — Research supplementary context
 
@@ -193,7 +152,7 @@ Focus on Thailand-specific, recent (2024-2026) sources.
 
 Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
 
-- Follow the approved outline exactly
+- Follow the proposed outline exactly
 - Open with TL;DR box
 - Embed the YouTube video after TL;DR
 - Answer-first H2 openings

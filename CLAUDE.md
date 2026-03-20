@@ -10,7 +10,7 @@ Video-to-article pipeline for greenenergythailand.com. Takes a YouTube URL, extr
 ## Key Rules
 
 - **Anti-fabrication**: Never fabricate personal experience or statistics. Use `[UNIQUE INSIGHT]` for novel data analysis. Every number needs a named source.
-- **Approval gate**: Always pause after Step 3 (proposal) for user approval before writing. Show title, category, key data, and outline.
+- **Approval gate**: Manual URLs pause after Step 3 for user approval. Vetted queue videos (`VETTED:`/`VETTED-RESEARCH:`/`VETTED-SERIES:`) skip the gate and run end-to-end.
 - **Thai context**: Enhance with Thai-specific info (permits, MEA/PEA, rates, incentives) not present in the video.
 - **Thai legal claims**: Laws not published in Royal Gazette get a disclaimer.
 - **Image style**: "natural lighting, candid photo, realistic" — NOT professional/cinematic.
