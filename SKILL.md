@@ -360,19 +360,27 @@ Report to the user:
 If invoked with `queue` instead of a URL:
 
 ```bash
-# Find next unprocessed URL
-URL=$(grep -v '^#' queue/video-queue.txt | grep -v '^DONE:' | grep -v '^SKIP:' | head -1)
+# Find next vetted URL (VETTED:, VETTED-RESEARCH:, or VETTED-SERIES:)
+LINE=$(grep -E '^VETTED(-RESEARCH|-SERIES)?: ' queue/video-queue.txt | head -1)
 ```
 
-Process it, then mark as done:
+Determine the queue type and extract the URL(s):
+
+- **`VETTED: <url>`** — Standard processing. Extract URL: `URL=$(echo "$LINE" | sed 's/^VETTED: //')`
+- **`VETTED-RESEARCH: <url>`** — Short source video. Extract URL the same way, but **run additional Brave Search research** in Step 3 to supplement the thin transcript. Aim for 3-5 supplementary sources before writing.
+- **`VETTED-SERIES: <url1>|<url2>|...|<urlN>`** — Multi-part series. Extract all URLs: `URLS=$(echo "$LINE" | sed 's/^VETTED-SERIES: //')` then split on `|`. Fetch transcripts for ALL parts and synthesize into a single article.
+
+Process it, then mark as done (preserves the original prefix for history):
 ```bash
-sed -i "s|^${URL}$|DONE: ${URL}|" queue/video-queue.txt
+sed -i "s|^${LINE}$|DONE: ${LINE#*: }|" queue/video-queue.txt
 ```
 
-If skipped by user, mark as:
+If skipped by user:
 ```bash
-sed -i "s|^${URL}$|SKIP: ${URL}|" queue/video-queue.txt
+sed -i "s|^${LINE}$|SKIP: ${LINE#*: }|" queue/video-queue.txt
 ```
+
+**Queue comments:** Lines starting with `#` immediately after a VETTED line are notes for that video (e.g., corrections, research hints). Read them before processing — they may contain important context like price corrections or source caveats.
 
 ## Error Handling
 

@@ -5,7 +5,7 @@ Video-to-article pipeline for greenenergythailand.com. Takes a YouTube URL, extr
 ## Commands
 
 - `/get-video "https://youtube.com/watch?v=..."` — Process a single video URL
-- `/get-video queue` — Process next unprocessed URL from `queue/video-queue.txt`
+- `/get-video queue` — Process next vetted URL from `queue/video-queue.txt`
 
 ## Key Rules
 

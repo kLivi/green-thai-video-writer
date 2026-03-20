@@ -1,4 +1,74 @@
 # Video Queue — one YouTube URL per line
 # Lines starting with # are ignored
 # Processed videos are prefixed with "DONE: "
+# Approved videos are prefixed with "VETTED: "
+# Research-heavy videos (short source, needs Brave Search supplement) marked with "VETTED-RESEARCH: "
+# Multi-part series use "VETTED-SERIES: " with all URLs on one line, pipe-separated
 DONE: https://www.youtube.com/watch?v=PzTcw5hb6EA
+
+# --- Solar ---
+VETTED: https://www.youtube.com/watch?v=inRHzBx6ziU
+# 5kWp solar panels in Thailand — 4-year real performance stats
+VETTED: https://www.youtube.com/watch?v=xT8FAET7OBA
+# Solar Rooftop investment deep dive (THE STANDARD WEALTH, Thai-language)
+VETTED-RESEARCH: https://www.youtube.com/watch?v=g-E7aBGtDrk
+# Can you go fully off-grid with solar in Thailand? Costs, setup, energy independence
+VETTED-RESEARCH: https://www.youtube.com/watch?v=54n2HhXkRgM
+# Mandatory BIPV in Thailand building regulations — unique policy angle
+
+# --- Wind ---
+VETTED: https://www.youtube.com/watch?v=-oNUs4bUtP4
+# Lam Takhong Wind Turbine Park, Nakhon Ratchasima — Thai wind showcase
+VETTED: https://www.youtube.com/watch?v=y2hg6mxX76Y
+# RidgeBlade home wind turbine — "could this work in Thailand?" angle
+# NOTE: Video cites false €53,000 price. RidgeBlade tech manager (Chris) corrected in comments:
+# price is fabricated, product is 5-rotor only, RB2 commercial first then RB1 residential.
+# Research current availability/pricing before writing.
+
+# --- EVs ---
+VETTED: https://www.youtube.com/watch?v=Q07R21FYZU4
+# CNA Correspondent: Thailand EV future with BYD and electric tuk-tuks (22 min)
+VETTED: https://www.youtube.com/watch?v=9nW7RH0OrUw
+# BYD opens first EV factory in Thailand
+VETTED: https://www.youtube.com/watch?v=6k48VpAS_uM
+# Thailand in the race for EV mass adoption — emissions targets and strategy
+
+# --- Energy Storage ---
+VETTED: https://www.youtube.com/watch?v=yp3JZHXqgl0
+# Full episode deep dive on energy storage systems (Thai-language)
+VETTED-RESEARCH: https://www.youtube.com/watch?v=3DNCKvQacIo
+# Thailand's green power revolution for data centers
+VETTED-RESEARCH: https://www.youtube.com/watch?v=p5oZoBfWPqg
+# Seminar: Thailand readiness for energy storage systems
+
+# --- Green Buildings ---
+VETTED: https://www.youtube.com/watch?v=o51nxN1I-ds
+# CBRE Thailand podcast — green building case study, ROI, efficiency
+VETTED: https://www.youtube.com/watch?v=f7jSeEEuGqc
+# Thai Green Building Institute director on market trends and adoption
+
+# --- Corporate Transition ---
+VETTED: https://www.youtube.com/watch?v=j48Ydofhn5w
+# Banpu CEO: Thailand's biggest coal producer going green (19 min)
+VETTED: https://www.youtube.com/watch?v=cWW7fzimlkA
+# EA Green Energy success formula — Go Green 2024 seminar
+VETTED: https://www.youtube.com/watch?v=Q8cpDMp3l-Y
+# Bangchak Climate Tech — Go Green 2024 seminar
+
+# --- Bioenergy ---
+VETTED-SERIES: https://www.youtube.com/watch?v=wXfp-hBG1NY|https://www.youtube.com/watch?v=E-kA_VPwq08|https://www.youtube.com/watch?v=Yhgdsf6B85A|https://www.youtube.com/watch?v=Cf3AbFVkPf4|https://www.youtube.com/watch?v=er1N5sfSOOw|https://www.youtube.com/watch?v=JHLZv3qaCLM|https://www.youtube.com/watch?v=X4oRYYkxkWc|https://www.youtube.com/watch?v=IHq6FwfJlKA
+# Bioenergy & Biochemical Industry in Thailand — 8-part academic seminar series
+VETTED: https://www.youtube.com/watch?v=44DBQQ3CwBE
+# Thai SynBio Forum: Bioenergy and Circular Economy
+
+# --- Energy Policy ---
+VETTED: https://www.youtube.com/watch?v=UJpr0T7nlA8
+# Energy Transition Series — Thailand 2025 & Beyond
+VETTED: https://www.youtube.com/watch?v=-DIIaNexqDM
+# ERC Forum 2024: Energy policy to mobilize Thailand's energy transition
+VETTED: https://www.youtube.com/watch?v=hA1mBKpi5Tk
+# ERC Forum 2023: Energy policy and regulation in Thailand
+VETTED: https://www.youtube.com/watch?v=N_LUQr8l2HM
+# Energy transition and sustainability in Thailand (1.5 hrs)
+VETTED: https://www.youtube.com/watch?v=-DUvmh14Zcs
+# Renewable energy and institutional governance in Thailand — researcher interview
