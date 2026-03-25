@@ -78,13 +78,15 @@ For each visual moment timestamp, download a 5-second window centered on the tim
 ```bash
 # Extract 5-second window around 03:42 (03:40 to 03:45)
 yt-dlp --js-runtimes node -f "bestvideo[height<=1080]" --download-sections "*03:40-03:45" -o "/tmp/frame_0342.mp4" "{URL}"
-# Extract the middle frame
-ffmpeg -i /tmp/frame_0342.mp4 -vf "select=eq(n\,75)" -frames:v 1 -q:v 2 /tmp/frame_0342.jpg
+# Extract 5 candidate frames (one per second)
+ffmpeg -i /tmp/frame_0342.mp4 -vf "fps=1" -q:v 2 /tmp/frame_0342_%d.jpg
 ```
 
-### Quality check
+This produces 5 candidate frames per visual moment (~25-30 total across all moments).
 
-After extracting all frames, the LLM views them (Claude Code can read images). If a frame is unusable (blurry, dark, just a talking head despite transcript cues), it gets dropped and the corresponding `[FRAME]` marker is replaced with an `[IMAGE]` marker for fal.ai generation.
+### Quality check and selection
+
+The LLM views all candidate frames for each visual moment (Claude Code can read images natively) and picks the best one — sharpest, most relevant to the topic, best composition. If none of the 5 candidates are usable (all blurry, all talking head despite transcript cues), the corresponding `[FRAME]` marker is replaced with an `[IMAGE]` marker for fal.ai generation.
 
 ### Resize and convert
 
