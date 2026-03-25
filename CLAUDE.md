@@ -27,6 +27,10 @@ Video-to-article pipeline for greenenergythailand.com. Takes a YouTube URL, extr
 - `BRAVE_SEARCH_API_KEY` — for supplementary research
 - Python 3.12+ with requests, beautifulsoup4, pillow, yt-dlp
 
+## Handoff
+
+Session state lives at: `/mnt/c/Users/livin/Documents/Obsidian Vault/green-energy-thailand/green-thai-video-writer/handoff.md`
+
 ## Project Context
 
 Part of the green-thai blog ecosystem:

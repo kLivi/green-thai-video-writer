@@ -1,3 +1,41 @@
+## 2026-03-25 — Discord notifications + video frame extraction
+
+### Discord draft notifications
+- Added Discord webhook notification to `scripts/wordpress_upload.py` in all 3 pipelines (video-writer, idea-writer, claude-blog)
+- Fires when a WordPress draft is created (not on updates or dry-run)
+- Rich embed with: article title linking to Cloudways preview URL (`/?p={id}&preview=true`), post ID, category, image count, focus keyword, edit link
+- Footer identifies which pipeline sent it (Video Pipeline / Idea Pipeline / Blog Pipeline)
+- `DISCORD_WEBHOOK_URL` added to shared `.env` (idea-writer/video-writer) and claude-blog's own `.env`
+- Non-blocking: failures just print a warning, don't stop the pipeline
+- Tested successfully — webhook delivered to Discord
+
+### Video frame extraction (design + implementation, not yet smoke-tested)
+- **Problem**: AI-generated images can be misleading when the video shows specific real-world things (actual installations, equipment, scenery). Video creators have already framed relevant shots.
+- **Solution**: Extract actual frames from the source YouTube video at timestamps identified from the transcript, fall back to fal.ai when no relevant frame exists.
+- **Design spec**: `docs/superpowers/specs/2026-03-25-video-frame-extraction-design.md`
+- **Implementation plan**: `docs/superpowers/plans/2026-03-25-video-frame-extraction.md`
+
+#### Key decisions
+- Cover image always fal.ai (1200×630 OG ratio). Video frames for inline only.
+- All video frames 650×366 — no cropping to portrait/square, respect creator's framing.
+- 5-second download window per timestamp (transcript timestamps are approximate).
+- 5 candidate frames extracted per moment, LLM views them and picks the best.
+- `<figcaption>` with linked attribution required on every video frame (fair use basis).
+- `[FRAME: MM:SS, description]` marker alongside existing `[IMAGE: description]` marker.
+
+#### Files modified
+- `prompts/extract-video-data.md` — added Visual Moments section (timestamp identification rules)
+- `SKILL.md` Step 2 — VTT file preservation note
+- `SKILL.md` Step 3 — reads VTT for timestamps, outputs visual moments list
+- `SKILL.md` Step 5 — two marker types (`[FRAME]` and `[IMAGE]`)
+- `SKILL.md` Step 6 — split into 6a (frame extraction via yt-dlp+ffmpeg) and 6b (fal.ai for cover + fallback)
+- `SKILL.md` Quality Checklist — frame attribution and dimension checks
+- `prompts/visual-media.md` — video frame section (dimensions, attribution format, fallback rules)
+- Installed skill copy synced to `~/.claude/skills/get-video/`
+
+#### Not yet done
+- End-to-end smoke test (`/get-video queue` with frame extraction)
+
 ## 2026-03-16 — Codebase audit & dependency updates
 
 ### Audit & fixes

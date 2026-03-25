@@ -7,7 +7,7 @@
 DONE: https://www.youtube.com/watch?v=PzTcw5hb6EA
 
 # --- Solar ---
-VETTED: https://www.youtube.com/watch?v=inRHzBx6ziU
+DONE: VETTED: https://www.youtube.com/watch?v=inRHzBx6ziU
 # 5kWp solar panels in Thailand — 4-year real performance stats
 VETTED: https://www.youtube.com/watch?v=xT8FAET7OBA
 # Solar Rooftop investment deep dive (THE STANDARD WEALTH, Thai-language)

@@ -1093,6 +1093,37 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
         print("Failed to create draft. Check errors above.")
     print(f"{'=' * 60}\n")
 
+    # Send Discord notification for new drafts
+    if post and post.get("id") and post.get("id") != 0:
+        discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL")
+        if discord_webhook:
+            try:
+                cat_display = f"{pillar_name} → {subcategory_name}" if subcategory_name else pillar_name
+                preview_url = f"{wp_url}/?p={post.get('id')}&preview=true"
+                discord_payload = {
+                    "embeds": [{
+                        "title": f"📝 Draft Ready: {meta['title'][:200]}",
+                        "url": preview_url,
+                        "color": 0x22c55e,
+                        "fields": [
+                            {"name": "Post ID", "value": str(post.get("id")), "inline": True},
+                            {"name": "Category", "value": cat_display, "inline": True},
+                            {"name": "Images", "value": str(len(media_map)), "inline": True},
+                            {"name": "Focus Keyword", "value": meta.get("focus_keyword", "—"), "inline": False},
+                            {"name": "Edit", "value": f"[Open editor]({edit_url})", "inline": False},
+                        ],
+                        "footer": {"text": "Green Energy Thailand • Video Pipeline"},
+                        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    }]
+                }
+                disc_resp = requests.post(discord_webhook, json=discord_payload, timeout=10)
+                if disc_resp.status_code in (200, 204):
+                    print("  Discord notification sent ✓")
+                else:
+                    print(f"  Discord notification failed ({disc_resp.status_code})")
+            except Exception as e:
+                print(f"  Discord notification skipped: {e}")
+
     # Trigger internal linking pipeline for new posts
     if post:
         result_id = post.get("id")
