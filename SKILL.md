@@ -124,12 +124,15 @@ if not embed:
 
 Using the rules in `prompts/extract-video-data.md`, extract structured data from the transcript.
 
+Also read the raw VTT file (`/tmp/yt-transcript.en.vtt` or `.th.vtt`) for timestamp data. Using the Visual Moments rules in `prompts/extract-video-data.md`, identify 5-6 visual moments with timestamps.
+
 Then, using `src/config/categories.json`, determine:
 - **Category**: best matching pillar and subcategory
 - **Article title**: following the format in `prompts/video-article-template.md`
 - **Article angle**: what unique value this article adds beyond the video
 - **Key data points**: the most interesting numbers/facts extracted
 - **Credibility rating**: high/medium/low based on extraction rules
+- **Visual moments**: 5-6 timestamps where the video likely shows relevant visuals (from VTT analysis)
 
 **If this video came from the vetted queue** (`VETTED:`, `VETTED-RESEARCH:`, or `VETTED-SERIES:`):
 - Log the proposal summary (title, category, angle, key data) for the record but **do not pause for approval** — proceed directly to Step 4.
