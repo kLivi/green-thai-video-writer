@@ -7,8 +7,8 @@ Replace AI-generated inline images with actual frames from the source YouTube vi
 - **Cover image**: Always fal.ai (1200x630 OG-compatible). Video frames don't crop well to this ratio.
 - **Inline images**: Default to video frames when a relevant visual moment exists. Fall back to fal.ai when no frame matches.
 - **Frame dimensions**: Always 650x366 inline landscape. No cropping to portrait/square — respect the creator's framing.
-- **Fair use**: Editorial screenshots with attribution. Each frame gets a `<figcaption>` crediting the video and creator.
-- **Approach**: Timestamp-based extraction (Approach A). The LLM identifies visual moments from transcript cues, yt-dlp downloads ~1 second at each timestamp, ffmpeg extracts one frame.
+- **Fair use**: Editorial screenshots with attribution. Each frame gets a `<figcaption>` linking to the source video and crediting the creator.
+- **Approach**: Timestamp-based extraction (Approach A). The LLM identifies visual moments from transcript timestamps, yt-dlp downloads a 5-second window at each timestamp, ffmpeg extracts one frame.
 
 ## Pipeline Changes
 
@@ -21,19 +21,31 @@ Step 2 (transcript) → Step 3 (analysis) → Step 5 (write) → Step 6 (generat
 ### New Flow
 
 ```
-Step 2 (transcript — VTT preserved) → Step 3 (analysis + visual moments) → Step 5 (write with [FRAME] and [IMAGE] markers) → Step 6a (extract frames) → Step 6b (fal.ai for cover + remaining [IMAGE]) → Step 7 (upload)
+Step 2 (transcript — VTT preserved) → Step 3 (analysis + visual moments from VTT) → Step 5 (write with [FRAME] and [IMAGE] markers) → Step 6a (extract frames) → Step 6b (fal.ai for cover + remaining [IMAGE]) → Step 7 (upload)
 ```
+
+## Timestamp Availability (Step 2 → Step 3)
+
+The current Step 2 saves the raw VTT file to `/tmp/yt-transcript.en.vtt` and converts it to clean text at `/tmp/yt-transcript-clean.txt` (timestamps stripped). The clean text is what Step 3 currently reads.
+
+**Change required:** Step 3 must read BOTH files:
+- `/tmp/yt-transcript-clean.txt` — for data extraction (existing behavior)
+- `/tmp/yt-transcript.en.vtt` (or `.th.vtt`) — for timestamp correlation when identifying visual moments
+
+The VTT format uses `HH:MM:SS.mmm` timestamps. The LLM should output visual moment timestamps in `MM:SS` format for videos under 1 hour, and `HH:MM:SS` for longer videos. The yt-dlp `--download-sections` flag accepts both formats.
 
 ## Visual Moment Identification (Step 3)
 
-During the existing data extraction, the LLM identifies 5-6 timestamps where the video likely shows something visually relevant rather than a talking-head segment.
+During the existing data extraction, the LLM reads the VTT file and identifies 5-6 timestamps where the video likely shows something visually relevant rather than a talking-head segment.
 
 ### What to look for
 
-- Topic shifts to physical objects ("this is my inverter", "here's the panel layout")
-- Demonstrative language ("as you can see", "let me show you", "look at this")
-- Location descriptions ("from the rooftop you can see the mountains")
-- Results on screens ("here are my electricity bills", "the app shows")
+These cues apply regardless of transcript language (English or Thai) — the LLM should identify the semantic pattern, not match specific keywords:
+
+- Topic shifts to physical objects (speaker describing equipment, showing hardware)
+- Demonstrative language (speaker directing attention to something visible)
+- Location descriptions (speaker describing surroundings, panning views)
+- Results on screens (electricity bills, app dashboards, monitoring data)
 - Before/after moments
 
 ### What to avoid
@@ -61,12 +73,18 @@ The LLM is guessing based on text cues. 5-6 candidates are identified knowing so
 
 ### Method
 
-For each visual moment timestamp, download ~1 second of video and extract a single frame:
+For each visual moment timestamp, download a 5-second window centered on the timestamp and extract a single frame. The buffer accounts for transcript timestamps being approximate — the speaker often says "look at this" a few seconds before or after the camera shows it.
 
 ```bash
-yt-dlp --js-runtimes node -f "bestvideo[height<=1080]" --download-sections "*03:42-03:43" -o "/tmp/frame_0342.mp4" "{URL}"
-ffmpeg -i /tmp/frame_0342.mp4 -frames:v 1 -q:v 2 /tmp/frame_0342.jpg
+# Extract 5-second window around 03:42 (03:40 to 03:45)
+yt-dlp --js-runtimes node -f "bestvideo[height<=1080]" --download-sections "*03:40-03:45" -o "/tmp/frame_0342.mp4" "{URL}"
+# Extract the middle frame
+ffmpeg -i /tmp/frame_0342.mp4 -vf "select=eq(n\,75)" -frames:v 1 -q:v 2 /tmp/frame_0342.jpg
 ```
+
+### Quality check
+
+After extracting all frames, the LLM views them (Claude Code can read images). If a frame is unusable (blurry, dark, just a talking head despite transcript cues), it gets dropped and the corresponding `[FRAME]` marker is replaced with an `[IMAGE]` marker for fal.ai generation.
 
 ### Resize and convert
 
@@ -81,7 +99,7 @@ img.save('output/images/{slug}-mountains.webp', 'WEBP', quality=82)
 
 ### Naming
 
-Same convention as current: `{slug}-{descriptor}.webp`. Descriptor comes from the visual moment description.
+Same convention as current: `{slug}-{descriptor}.webp`. The LLM derives the short descriptor during article writing [LLM step] — e.g., "Mountains and trees blocking afternoon sun" becomes `mountains`.
 
 ### Attribution HTML
 
@@ -90,11 +108,11 @@ Same convention as current: `{slug}-{descriptor}.webp`. Descriptor comes from th
   <img src="images/{slug}-mountains.webp"
        alt="Mountains and trees near the installation that block afternoon sunlight"
        width="650" height="366" loading="lazy">
-  <figcaption>Screenshot from "{video title}" by {channel}</figcaption>
+  <figcaption>Screenshot from <a href="{youtube_url}" target="_blank" rel="noopener">"{video title}"</a> by {channel}</figcaption>
 </figure>
 ```
 
-The `<figcaption>` with attribution is required on every video frame. This is the key difference from fal.ai images.
+The `<figcaption>` with linked attribution is required on every video frame. This is the key difference from fal.ai images and strengthens the fair use basis.
 
 ## Article Writing Integration (Step 5)
 
@@ -112,17 +130,18 @@ The visual moments list from Step 3 is available during writing. For each articl
 - Cover image is always `[IMAGE]` (fal.ai, 1200x630)
 - Inline images default to `[FRAME]` when a relevant visual moment exists
 - `[IMAGE]` is fallback for sections with no matching visual moment
-- Total inline images: 2-4 per article (mix of frames and generated)
+- Total inline images: 2-4 per article (frames + fal.ai combined, not counted separately)
 
 ### Fallback triggers
 
 fal.ai generates an image instead when:
 - Frame extraction fails (yt-dlp error, timestamp issue)
+- The extracted frame is unusable (LLM views it and rejects it)
 - No visual moment matches a section that needs an image
 
 ## What Doesn't Change
 
-- Step 2 (transcript fetch) — VTT file already saved to /tmp
+- Step 2 (transcript fetch) — VTT file already saved to /tmp, no modification needed
 - Cover image workflow — always fal.ai
 - Chart generation (Step 5b) — untouched
 - WordPress upload — frames are .webp files in output/images/, same as fal.ai
@@ -133,11 +152,12 @@ fal.ai generates an image instead when:
 
 | File | Change |
 |------|--------|
-| `prompts/extract-video-data.md` | Add Visual Moments section to extraction rules |
-| `SKILL.md` Step 3 | Add visual moment identification to analysis output |
+| `prompts/extract-video-data.md` | Add Visual Moments section with identification rules and output format |
+| `SKILL.md` Step 2 | Note that VTT file must be preserved for Step 3 |
+| `SKILL.md` Step 3 | Read VTT file alongside clean transcript; add visual moment identification |
 | `SKILL.md` Step 5 | Document `[FRAME]` marker alongside `[IMAGE]` |
-| `SKILL.md` Step 6 | Split into 6a (frame extraction) and 6b (fal.ai) |
-| `prompts/visual-media.md` | Add video frame handling section and attribution format |
+| `SKILL.md` Step 6 | Split into 6a (frame extraction + quality check) and 6b (fal.ai for cover + remaining `[IMAGE]`) |
+| `prompts/visual-media.md` | Add video frame section: dimensions, attribution format, fallback rules |
 
 ## New Dependencies
 
