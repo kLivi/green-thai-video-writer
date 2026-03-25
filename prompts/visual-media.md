@@ -54,6 +54,43 @@ date: "YYYY-MM-DD"
 
 ---
 
+## Video Frame Extraction
+
+When the article is based on a YouTube video (video-writer pipeline), inline images should default to actual frames from the source video rather than AI-generated images. This is more authentic — the video creator has already framed relevant shots of equipment, installations, and scenery.
+
+### When to use video frames vs fal.ai
+
+| Image Type | Source | Rationale |
+|-----------|--------|-----------|
+| Cover/featured (1200×630) | fal.ai | Video frames don't crop well to OG ratio |
+| Inline — topic shown in video | Video frame | Authentic, creator-framed |
+| Inline — topic NOT in video | fal.ai | No relevant frame available |
+
+### Frame dimensions
+
+All video frames use **650×366** (inline landscape) only. Do not crop to portrait or square — respect the creator's original 16:9 framing.
+
+### Attribution (required)
+
+Every video frame MUST include a `<figcaption>` with linked attribution:
+
+```html
+<figure>
+  <img src="images/{slug}-{descriptor}.webp"
+       alt="Descriptive alt text — full sentence, 10-125 chars"
+       width="650" height="366" loading="lazy">
+  <figcaption>Screenshot from <a href="{youtube_url}" target="_blank" rel="noopener">"{video title}"</a> by {channel}</figcaption>
+</figure>
+```
+
+This strengthens the fair use basis (editorial commentary with attribution). fal.ai images do NOT get this figcaption — only video frames.
+
+### Fallback to fal.ai
+
+If frame extraction fails or the extracted frame is unusable (blurry, dark, talking head), replace the `[FRAME]` marker with an `[IMAGE]` marker and generate via fal.ai as normal.
+
+---
+
 ## Image Generation (fal.ai Seedream v4.5)
 
 All blog images are AI-generated using fal.ai's Seedream v4.5 model. Images are
