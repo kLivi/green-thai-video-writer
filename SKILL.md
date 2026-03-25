@@ -220,12 +220,73 @@ Verify each chart:
 
 If no `[CHART]` markers exist, skip this step.
 
-### Step 6 — Generate images
+### Step 6a — Extract video frames
 
-Generate AI images for each `[IMAGE: ...]` marker using fal.ai Seedream v4.5.
+For each `[FRAME: MM:SS, description]` marker in the article, extract candidate frames from the source video.
+
+#### 6a-i: Download 5-second clips
+
+For each `[FRAME]` marker, download a 5-second window centered on the timestamp:
+
+```bash
+# Example for timestamp 03:42 — download 03:40 to 03:45
+yt-dlp --js-runtimes node -f "bestvideo[height<=1080]" --download-sections "*03:40-03:45" -o "/tmp/frame_0342.mp4" "{URL}"
+```
+
+Process all `[FRAME]` markers before moving to the next substep.
+
+#### 6a-ii: Extract candidate frames
+
+For each downloaded clip, extract 5 candidate frames (one per second):
+
+```bash
+ffmpeg -i /tmp/frame_0342.mp4 -vf "fps=1" -q:v 2 /tmp/frame_0342_%d.jpg
+```
+
+#### 6a-iii: Select best frames
+
+View all candidate frames for each visual moment (use the Read tool on each `.jpg` file). Pick the best one per moment — sharpest, most relevant to the topic, best composition.
+
+If none of the 5 candidates for a moment are usable (all blurry, all talking head), replace the corresponding `[FRAME]` marker with an `[IMAGE]` marker so fal.ai handles it in Step 6b.
+
+#### 6a-iv: Resize and save
+
+```bash
+mkdir -p output/images
+python3 -c "
+from PIL import Image
+img = Image.open('/tmp/frame_0342_3.jpg')  # whichever candidate was selected
+img = img.resize((650, 366), Image.Resampling.LANCZOS)
+img.save('output/images/{slug}-{descriptor}.webp', 'WEBP', quality=82)
+"
+```
+
+All video frames use 650×366 (inline landscape). No cropping to portrait or square — respect the creator's original framing.
+
+Naming: `{slug}-{descriptor}.webp` — descriptor derived from the visual moment description (e.g., "Mountains and trees blocking afternoon sun" → `mountains`).
+
+#### 6a-v: Replace [FRAME] markers in HTML
+
+Replace each `[FRAME: ...]` with:
+```html
+<figure>
+  <img src="images/{slug}-{descriptor}.webp"
+       alt="Descriptive alt text — full sentence, 10-125 chars"
+       width="650" height="366" loading="lazy">
+  <figcaption>Screenshot from <a href="{youtube_url}" target="_blank" rel="noopener">"{video title}"</a> by {channel}</figcaption>
+</figure>
+```
+
+The `<figcaption>` with linked attribution is **required** on every video frame.
+
+If frame extraction fails for any marker (yt-dlp error, ffmpeg error), replace the `[FRAME]` marker with `[IMAGE]` for fal.ai fallback in the next step.
+
+### Step 6b — Generate AI images (cover + fallback)
+
+Generate AI images for remaining `[IMAGE: ...]` markers (cover image + any sections without a video frame) using fal.ai Seedream v4.5.
 Follow the rules in `prompts/visual-media.md`.
 
-#### 6a: Generate prompts
+#### 6b-i: Generate prompts
 
 For each `[IMAGE]` marker, write a generation prompt:
 - Describe what a person standing there would actually see and photograph
@@ -245,7 +306,7 @@ Assign dimensions:
 
 Vary dimensions across the article. Include at least one portrait.
 
-#### 6b: Submit to fal.ai
+#### 6b-ii: Submit to fal.ai
 
 ```bash
 export IMAGE_API_KEY=$(grep IMAGE_API_KEY /home/unify/Documents/green-energy-thailand/green-thai-video-writer/.env | cut -d= -f2)
@@ -261,7 +322,7 @@ curl -s -X POST "https://queue.fal.run/fal-ai/bytedance/seedream/v4.5/text-to-im
 
 Submit ALL jobs before polling.
 
-#### 6c: Poll and download
+#### 6b-iii: Poll and download
 
 Poll each `status_url` every 5 seconds until `COMPLETED`:
 ```bash
@@ -275,7 +336,7 @@ curl -s "$RESPONSE_URL" -H "Authorization: Key $IMAGE_API_KEY"
 
 Image URL in `images[0].url`.
 
-#### 6d: Resize and convert to WebP
+#### 6b-iv: Resize and convert to WebP
 
 ```bash
 mkdir -p output/images
@@ -290,7 +351,7 @@ img.save('output/images/{slug}-{descriptor}.webp', 'WEBP', quality=82)
 
 Naming: `{slug}-featured.webp` for cover, `{slug}-{descriptor}.webp` for inline.
 
-#### 6e: Replace markers in HTML
+#### 6b-v: Replace markers in HTML
 
 Replace each `[IMAGE: ...]` with:
 ```html
@@ -378,4 +439,6 @@ sed -i "s|^${LINE}$|SKIP: ${LINE#*: }|" queue/video-queue.txt
 - [ ] 3-5 images (1 cover + 2-4 inline), all WebP
 - [ ] Cover named `{slug}-featured.webp`
 - [ ] Alt text on every image
+- [ ] Video frames have `<figcaption>` with linked attribution to source video
+- [ ] Video frames are 650×366 (no portrait/square crops)
 - [ ] No anti-patterns from content-rules.md
