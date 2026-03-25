@@ -168,7 +168,11 @@ Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
 - Target 1500-2500 words
 - **Pillar phrase requirement:** The article MUST use at least one of the pillar's `pillar_phrases` from `src/config/categories.json` naturally in the body text. This enables the internal linking pipeline to create upward links to the pillar page. Check the chosen pillar's phrases and weave one in — e.g., for a Solar Energy article, use "solar energy" or "solar power" at least once.
 
-**Image markers:** Place `[IMAGE: description]` markers (3-5 total, 1 cover + 2-4 inline).
+**Image markers:** Two types of image marker:
+- `[IMAGE: description]` — for fal.ai generation. Always use for the cover image. Use for inline images only when no visual moment matches the section content.
+- `[FRAME: MM:SS, description]` — for video frame extraction. Default for inline images when a visual moment from Step 3 matches the section being written. The timestamp must match one of the identified visual moments.
+
+Place 3-5 image markers total (1 cover `[IMAGE]` + 2-4 inline, preferring `[FRAME]` when available).
 **Chart markers:** Place `[CHART: ...]` markers where data supports visualization (0-2 per article).
 
 Output the full article HTML:
