@@ -47,3 +47,38 @@ Rate the video's data reliability:
 - **Low**: Vague claims, promotional content, no supporting evidence
 
 Note: Many Thai-language videos mix Thai and English technical terms. Extract data regardless of language.
+
+## Visual Moments
+
+Identify 5-6 timestamps where the video likely shows something visually relevant — equipment, installations, scenery, screens, results — rather than a talking-head segment.
+
+**To identify visual moments, read the raw VTT file** (not just the clean transcript) and look for:
+
+- Topic shifts to physical objects (speaker describing equipment, showing hardware)
+- Demonstrative language (speaker directing attention to something visible)
+- Location descriptions (speaker describing surroundings, panning views)
+- Results on screens (electricity bills, app dashboards, monitoring data)
+- Before/after moments
+
+**Skip these — they are likely talking-head segments:**
+
+- Intro/outro sequences
+- Segments that are purely verbal explanation with no visual subject
+- Long monologues without topic shifts
+
+These cues apply regardless of transcript language (English or Thai) — identify the semantic pattern, not specific keywords.
+
+### Output format
+
+```
+Visual Moments:
+1. 03:42 — Mountains and trees blocking afternoon sun (speaker pans to show horizon)
+2. 07:15 — Inverter mounted on wall (speaker walks to equipment)
+3. 09:30 — Electricity bill comparison on screen
+4. 12:45 — Panel array on rooftop from ground level
+5. 15:20 — Wiring and junction box close-up
+```
+
+Use `MM:SS` format for videos under 1 hour, `HH:MM:SS` for longer videos. Include a brief reason in parentheses explaining why you believe this moment is visual.
+
+Present 5-6 candidates. Some may turn out to be duds — the best 2-4 will be selected later during article writing.
