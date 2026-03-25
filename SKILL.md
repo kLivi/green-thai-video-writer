@@ -77,6 +77,8 @@ print(transcript)
 " > /tmp/yt-transcript-clean.txt
 ```
 
+**VTT preservation:** The raw VTT file (`/tmp/yt-transcript.en.vtt` or `.th.vtt`) is needed in Step 3 for visual moment identification. Do not delete it after conversion.
+
 If English subtitles aren't available, try Thai (`.th.vtt`) and note that the transcript is in Thai.
 
 **If no subtitles at all**, try extracting audio description or inform the user:
