@@ -1095,7 +1095,9 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
 
     # Send Discord notification for new drafts
     if post and post.get("id") and post.get("id") != 0:
-        discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL")
+        _env_path = Path(__file__).resolve().parent.parent / ".env"
+        _env = load_env(_env_path)
+        discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL") or _env.get("DISCORD_WEBHOOK_URL")
         if discord_webhook:
             try:
                 cat_display = f"{pillar_name} → {subcategory_name}" if subcategory_name else pillar_name

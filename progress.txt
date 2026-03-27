@@ -1,3 +1,22 @@
+## 2026-03-27 — Discord notification bug fix + queue audit
+
+### Discord notification was silently broken
+- **Root cause**: `wordpress_upload.py` checked `os.environ.get("DISCORD_WEBHOOK_URL")` only — never read from `.env`. Since the env var isn't in the OS environment (only in `.env`), the notification was skipped on every run with no error.
+- **Fix**: Added `load_env()` call at the notification block so it reads `DISCORD_WEBHOOK_URL` from `.env` via the same pattern used for WordPress credentials. Two-line change.
+- **Result**: Discord draft notifications now actually fire. The code was already fully correct (rich embed, preview link, edit link, timestamp) — it just couldn't find the webhook URL.
+
+### Queue audit
+- Investigated why last scheduler run was 2026-03-22. Confirmed: bi-weekly schedule is correct (3/22 → 4/5). Not a problem.
+- `xT8FAET7OBA` (Solar Rooftop investment deep dive) was still marked `VETTED:` despite evidence it was already processed. Marked as `DONE:` manually to prevent duplicate processing on 4/5 run.
+- Queue has 14 VETTED items remaining across all categories.
+
+### Scripts folder reorganisation (C:\Users\livin\scripts\)
+- `get-video-auto.sh` and `get-video-scheduled.ps1` moved to `get-video/` subfolder
+- Task Scheduler task `GetVideo-GreenThailand` needs its action path updated (requires admin PowerShell — user must run manually):
+  ```powershell
+  Set-ScheduledTask -TaskName 'GetVideo-GreenThailand' -Action (New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\livin\scripts\get-video\get-video-scheduled.ps1"')
+  ```
+
 ## 2026-03-25 — Discord notifications + video frame extraction
 
 ### Discord draft notifications

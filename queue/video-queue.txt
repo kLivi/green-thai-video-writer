@@ -9,7 +9,7 @@ DONE: https://www.youtube.com/watch?v=PzTcw5hb6EA
 # --- Solar ---
 DONE: VETTED: https://www.youtube.com/watch?v=inRHzBx6ziU
 # 5kWp solar panels in Thailand — 4-year real performance stats
-VETTED: https://www.youtube.com/watch?v=xT8FAET7OBA
+DONE: https://www.youtube.com/watch?v=xT8FAET7OBA
 # Solar Rooftop investment deep dive (THE STANDARD WEALTH, Thai-language)
 VETTED-RESEARCH: https://www.youtube.com/watch?v=g-E7aBGtDrk
 # Can you go fully off-grid with solar in Thailand? Costs, setup, energy independence
