@@ -204,21 +204,33 @@ Wrap in a full HTML document (required by wordpress_upload.py):
 
 ### Step 5b — Generate charts
 
-For each `[CHART: ...]` marker, generate an inline SVG chart following `prompts/chart-rules.md`.
+For each `[CHART: ...]` marker, generate an inline SVG chart using `scripts/build_chart.py`.
 
-1. Parse chart type, title, data, source from the marker
-2. Generate SVG using approved styling (currentColor, transparent bg, approved palette)
-3. Wrap in `<figure>`
-4. Replace the `[CHART]` marker in the HTML
+The `[CHART]` marker format is:
+```
+[CHART: {chart_type}|{title}|{data_json}|source={source}|subtitle={optional_subtitle}|highlight={optional_label}]
+```
 
-Verify each chart:
-- No hardcoded text colors (all `currentColor`)
-- No white/light backgrounds
-- Source attribution at bottom
-- `role="img"` and `aria-label` on `<svg>`
-- `<title>` and `<desc>` inside `<svg>`
+Example:
+```
+[CHART: horizontal-bar|Solar Costs by Year|{"labels":["2020","2021","2022"],"values":[120000,110000,95000]}|source=MEG Study 2023]
+```
+
+For each `[CHART]` marker:
+1. Parse the marker to extract: chart_type, title, data (JSON), source, subtitle, highlight
+2. Run `python scripts/build_chart.py` with:
+   - `--type {chart_type}`
+   - `--title "{title}"`
+   - `--data '{data_json}'`
+   - `--source "{source}"` (if provided)
+   - `--subtitle "{subtitle}"` (if provided)
+   - `--highlight "{label}"` (if provided)
+3. Capture the `<figure><svg>...</svg></figure>` output
+4. Replace the `[CHART]` marker in the HTML with the generated SVG block
 
 If no `[CHART]` markers exist, skip this step.
+
+Note: The `build_chart.py` script enforces consistent styling (currentColor, transparent background, accessibility). Do not modify the generated SVG.
 
 ### Step 6a — Extract video frames
 
@@ -380,6 +392,7 @@ Report to the user:
 - Category assigned
 - Video URL and channel credited
 - Number of images generated and uploaded
+- Number of charts generated (and their types)
 - Number of charts generated
 - Credibility rating from Step 3
 - Any quality concerns to address before publishing
@@ -435,7 +448,7 @@ sed -i "s|^${LINE}$|SKIP: ${LINE#*: }|" queue/video-queue.txt
 - [ ] FAQ section at end
 - [ ] Word count 1500-2500
 - [ ] Thai context adds genuine value (not padding)
-- [ ] Charts use currentColor, transparent bg, source attribution
+- [ ] Charts generated via build_chart.py (not hand-coded SVG)
 - [ ] 3-5 images (1 cover + 2-4 inline), all WebP
 - [ ] Cover named `{slug}-featured.webp`
 - [ ] Alt text on every image

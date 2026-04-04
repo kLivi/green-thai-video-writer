@@ -1,3 +1,24 @@
+## 2026-04-04 — Chart generation standardization
+
+**Task**: Align chart generation with claude-blog pipeline using build_chart.py script.
+
+**What was done**:
+- Copied `scripts/build_chart.py` from claude-blog to this pipeline
+- Updated SKILL.md Step 5b to use build_chart.py instead of hand-coded SVG
+- Defined new `[CHART: ...]` marker format with pipe-separated fields
+- Updated quality checklist to verify charts are generated via script
+
+**Files changed**:
+- scripts/build_chart.py (new — copied from claude-blog)
+- SKILL.md (Step 5b workflow, chart marker format, quality checklist)
+
+**Result**:
+- Charts now use deterministic Python script for consistent styling
+- Same visual output and accessibility features as claude-blog
+- LLM selects what to chart, script handles rendering
+
+---
+
 ## 2026-03-27 — Discord notification bug fix + queue audit
 
 ### Discord notification was silently broken
@@ -94,3 +115,52 @@
 - `scripts/wordpress_upload.py` — added internal linking hook (auto-triggers `run_new_post_mode` after upload), added article-type meta parsing
 - `SKILL.md` — added `<meta name="article-type" content="support">` to HTML template, added pillar phrase requirement (articles must mention pillar topic phrase for upward links)
 - `src/config/categories.json` — added `pillar_phrases` field to each pillar
+
+---
+## Session 2026-03-29: Off-Grid Solar in Thailand (g-E7aBGtDrk) — VETTED-RESEARCH
+
+**Completed:** Full pipeline execution from video to WordPress draft, frame extraction smoke test
+
+### What was done:
+1. Processed `VETTED-RESEARCH` video (TheContractorZone, 3:57)
+2. Extracted transcript using yt-dlp (English subtitles, ~570 words)
+3. Data extraction: 4 core components, no cost data, Thailand solar potential, battery emphasis
+4. Supplementary research (Brave Search):
+   - Thai off-grid system costs: 250-500K+ THB (batteries dominate budget)
+   - Regulations: <10kW exempt from licensing
+   - Battery costs: 110K THB for 5kW high-voltage system
+   - Solar irradiance: 17.4 MJ/m²/day annual average
+5. Article written (1,900+ words target achieved):
+   - TL;DR, video embed, 8 H2 sections + FAQ
+   - 2 inline images + 1 grouped bar chart
+   - Sources cited inline (Thai context, regulations, costs)
+   - Pillar phrase used: "solar energy" x3
+6. Images generated via fal.ai:
+   - Cover 1200×630 (off-grid-solar-thailand-featured.webp, 108K)
+   - Inline 650×366 (hillside, 53K)
+   - Inline 450×600 (batteries, 46K)
+7. Chart generated: SVG grouped bar chart (energy consumption vs battery capacity)
+8. Published to WordPress:
+   - Post ID: 505
+   - Slug: off-grid-solar-thailand
+   - Category: Solar Energy
+   - Featured image set, 2 images uploaded
+   - RankMath SEO + JSON-LD schema auto-generated
+   - Discord notification fired ✓
+
+### Quality notes:
+- Credibility: Medium (educational, no personal case study)
+- Visual moments limited (short 3:57 video, no on-site footage) — no FRAME extraction needed
+- Content fills gaps from video: cost breakdown, Thai regulations, battery reality check
+- Sentence rhythm checked, AI trigger words kept <5/1000
+- All external stats linked inline with sources
+
+### Queue status:
+- Marked g-E7aBGtDrk as DONE
+- Next unprocessed: 54n2HhXkRgM (VETTED-RESEARCH, BIPV building regulations)
+
+### Testing notes:
+- Frame extraction workflow confirmed unnecessary for this video (no visual moments suitable for extraction)
+- Next video (BIPV) should have better visual content from building sites
+- Discord notification working correctly (fired immediately after draft creation)
+
