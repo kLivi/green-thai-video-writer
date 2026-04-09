@@ -29,7 +29,7 @@ Video-to-article pipeline for greenenergythailand.com. Takes a YouTube URL, extr
 
 ## Handoff
 
-Session state lives at: `/mnt/c/Users/livin/Documents/Obsidian Vault/green-energy-thailand/green-thai-video-writer/handoff.md`
+Session state lives at: `/home/unify/Documents/Brain/green-energy-thailand/green-thai-video-writer/handoff.md`
 
 ## Project Context
 
