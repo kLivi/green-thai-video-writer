@@ -174,6 +174,12 @@ def parse_article(html_path: Path) -> dict:
         # Derive from first H2 or title
         meta["focus_keyword"] = _derive_focus_keyword(meta["title"])
 
+    # Pillar and subcategory (silo structure)
+    pillar_tag = soup.find("meta", attrs={"name": "pillar"})
+    meta["pillar"] = pillar_tag["content"] if pillar_tag and pillar_tag.get("content") else ""
+    subcat_tag = soup.find("meta", attrs={"name": "subcategory"})
+    meta["subcategory"] = subcat_tag["content"] if subcat_tag and subcat_tag.get("content") else ""
+
     # Article type (seo / support)
     at_tag = soup.find("meta", attrs={"name": "article-type"})
     meta["article_type"] = at_tag["content"] if at_tag and at_tag.get("content") else "support"
@@ -784,6 +790,86 @@ _SUBCATEGORY_KEYWORDS: list[tuple[str, str, str]] = [
 ]
 
 
+# WordPress category IDs for the silo hierarchy.
+# These match the categories already created in WordPress.
+# Keep in sync with claude-blog/scripts/wordpress_upload.py.
+SILO_CATEGORY_IDS: dict[str, dict[str, int]] = {
+    "Solar Energy": {
+        "_pillar": 68,
+        "Solar Costs & Financing": 69,
+        "Installation, Permits & Grid Connection": 70,
+        "Climate, Performance & Maintenance": 71,
+        "Utility-Scale Solar & Innovation": 72,
+    },
+    "Wind Power": {
+        "_pillar": 73,
+        "Onshore Wind Farms": 74,
+        "Offshore Wind & Future Development": 75,
+        "When Wind Works (and When It Doesn't)": 76,
+    },
+    "Hydroelectric Power": {
+        "_pillar": 77,
+        "Large Dams & Major Projects": 78,
+        "Small-Scale & Micro Hydro": 79,
+        "Environmental & Social Impacts": 80,
+        "Pumped Storage & Energy Storage": 81,
+    },
+    "Bioenergy": {
+        "_pillar": 82,
+        "Agricultural Biomass": 83,
+        "Biogas Systems": 84,
+        "Biofuels": 85,
+        "Waste-to-Energy": 86,
+    },
+    "Energy Storage & Grid Infrastructure": {
+        "_pillar": 87,
+        "Battery Storage Systems": 88,
+        "Grid Infrastructure & Challenges": 89,
+        "Alternative Storage Technologies": 90,
+    },
+    "Electric Vehicles & Clean Transport": {
+        "_pillar": 91,
+        "Buying & Owning an EV": 92,
+        "EV Charging Infrastructure": 93,
+        "Thailand's EV Industry": 94,
+    },
+    "Green Buildings & Energy Efficiency": {
+        "_pillar": 95,
+        "Practical Energy Efficiency": 96,
+        "District Cooling Systems": 97,
+        "Certification & Standards": 98,
+    },
+    "Policy, Economics & Thailand Context": {
+        "_pillar": 99,
+        "Incentives, Subsidies & Tax Breaks": 100,
+        "Electricity Pricing & Economics": 101,
+        "National Energy Goals & Plans": 102,
+        "Regional Energy Landscapes": 103,
+        "Community & Cooperative Energy": 104,
+    },
+}
+
+
+def resolve_silo_categories(pillar: str, subcategory: str) -> list[int]:
+    """Resolve pillar and subcategory names to WordPress category IDs.
+
+    Returns a list of category IDs (pillar + subcategory if found).
+    Names must match SILO_CATEGORY_IDS keys exactly.
+    """
+    pillar_data = SILO_CATEGORY_IDS.get(pillar)
+    if not pillar_data:
+        return []
+
+    cat_ids = [pillar_data["_pillar"]]
+
+    if subcategory and subcategory in pillar_data:
+        cat_ids.append(pillar_data[subcategory])
+    elif subcategory:
+        print(f"  Warning: Subcategory '{subcategory}' not found under pillar '{pillar}' — only pillar assigned")
+
+    return cat_ids
+
+
 def derive_category(title: str) -> tuple[str, str | None]:
     """Derive WordPress pillar and subcategory from the article title.
 
@@ -935,12 +1021,25 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
 
     # 6. Resolve categories (pillar + subcategory)
     print(f"\n[6/8] Resolving categories...")
-    if category:
-        # --category flag: treat as pillar name, still derive subcategory
-        pillar_name = category
-        _, subcategory_name = derive_category(meta["title"])
-    else:
-        pillar_name, subcategory_name = derive_category(meta["title"])
+    silo_cat_ids = []
+
+    # Prefer HTML meta tags (set by pipeline when article is generated)
+    if meta.get("pillar"):
+        pillar_name = meta["pillar"]
+        subcategory_name = meta.get("subcategory", "")
+        silo_cat_ids = resolve_silo_categories(pillar_name, subcategory_name)
+        if not silo_cat_ids:
+            print(f"  Warning: Pillar '{pillar_name}' not in silo map, falling back to title-based")
+
+    # Fall back to --category flag or title-based derivation
+    if not silo_cat_ids:
+        if category:
+            pillar_name = category
+            _, subcategory_name = derive_category(meta["title"])
+        else:
+            pillar_name, subcategory_name = derive_category(meta["title"])
+        silo_cat_ids = resolve_silo_categories(pillar_name, subcategory_name or "")
+
     print(f"  Pillar:      {pillar_name}")
     print(f"  Subcategory: {subcategory_name or '(none detected)'}")
 
@@ -993,29 +1092,14 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
     # 7. Create draft post
     print(f"\n[7/8] Creating WordPress draft...")
 
-    # Resolve pillar category ID
-    pillar_id = client.find_category(pillar_name)
-    if pillar_id:
-        print(f"  Pillar: {pillar_name} (ID: {pillar_id})")
+    if silo_cat_ids:
+        category_ids = silo_cat_ids
+        print(f"  Silo: {pillar_name} > {subcategory_name or '(pillar only)'} (IDs: {category_ids})")
     else:
-        print(f"  ERROR: Pillar category '{pillar_name}' not found on WordPress site!")
-        print(f"  Post would be created as Uncategorized. Check category mapping in derive_category().")
-        print(f"  Available pillars: Solar Energy, Wind Power, Hydroelectric Power, Bioenergy,")
-        print(f"    Energy Storage & Grid Infrastructure, Electric Vehicles & Clean Transport,")
-        print(f"    Green Buildings & Energy Efficiency, Policy, Economics & Thailand Context")
-        if not dry_run:
-            sys.exit(1)
-
-    # Resolve subcategory ID (child of pillar)
-    category_ids: list[int] = []
-    if pillar_id:
-        category_ids.append(pillar_id)
-    subcategory_id = None
-    if subcategory_name and pillar_id:
-        subcategory_id = client.find_category(subcategory_name, parent_id=pillar_id)
-        if subcategory_id:
-            category_ids.append(subcategory_id)
-            print(f"  Subcategory: {subcategory_name} (ID: {subcategory_id})")
+        # Last resort: look up by name via API
+        pillar_id = client.find_category(pillar_name)
+        category_ids = [pillar_id] if pillar_id else []
+        print(f"  Category: {pillar_name} (ID: {pillar_id}) [fallback — no silo match]")
 
     post_data = {
         "title": meta["title"],
@@ -1125,19 +1209,6 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
                     print(f"  Discord notification failed ({disc_resp.status_code})")
             except Exception as e:
                 print(f"  Discord notification skipped: {e}")
-
-    # Trigger internal linking pipeline for new posts
-    if post:
-        result_id = post.get("id")
-        if result_id and result_id != 0:  # Not dry-run
-            try:
-                sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "get-internal-linking"))
-                from pipeline import run_new_post_mode
-                print("\n[Internal Linking] Generating link suggestions...")
-                run_new_post_mode(post_id=result_id, article_type=meta.get("article_type", "support"))
-                print("  Review suggestions at: http://localhost:8501")
-            except Exception as e:
-                print(f"  [Internal Linking] Skipped: {e}")
 
     return post
 
