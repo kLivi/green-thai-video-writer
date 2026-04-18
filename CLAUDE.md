@@ -16,7 +16,7 @@ Video-to-article pipeline for greenenergythailand.com. Takes a YouTube URL, extr
 - Image processing: Pillow resize + WebP (see `scripts/wordpress_upload.py`)
 - Chart generation: SVG builder via `prompts/chart-rules.md` + `scripts/build_chart.py`
 - Research: Brave Search API
-- **Thai legal claims**: Laws not published in Royal Gazette get a disclaimer
+- **Thai policy/legal/rate claims**: see `/home/unify/Documents/green-energy-thailand/thai-facts.md` (Royal Gazette rule, confirmed rates, bad sources)
 
 ## Handoff
 

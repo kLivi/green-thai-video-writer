@@ -32,6 +32,11 @@ cd /home/unify/Documents/green-energy-thailand/green-thai-video-writer
 ```
 
 Read these files before starting:
+- `/home/unify/Documents/green-energy-thailand/thai-facts.md` — **canonical Thai
+  energy facts (REQUIRED)**. Covers confirmed rates, program status, the Royal
+  Gazette rule, known bad sources, and preferred sources. If this file is
+  missing, STOP the run and report: "Canonical Thai facts file missing —
+  aborting to prevent fact drift." Do not guess rates or legal claims.
 - `prompts/extract-video-data.md` — data extraction rules
 - `prompts/thai-context.md` — Thai enhancement context
 - `prompts/video-article-template.md` — article structure
