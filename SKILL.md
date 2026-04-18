@@ -32,7 +32,7 @@ cd /home/unify/Documents/green-energy-thailand/green-thai-video-writer
 ```
 
 Read these files before starting:
-- `/home/unify/Documents/green-energy-thailand/thai-facts.md` — **canonical Thai
+- `/home/unify/Documents/green-energy-thailand/claude-blog/shared/thai-facts.md` — **canonical Thai
   energy facts (REQUIRED)**. Covers confirmed rates, program status, the Royal
   Gazette rule, known bad sources, and preferred sources. If this file is
   missing, STOP the run and report: "Canonical Thai facts file missing —
