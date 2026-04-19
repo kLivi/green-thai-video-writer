@@ -92,6 +92,45 @@ def load_env(env_path: Path) -> dict:
     return env
 
 
+# Pipeline label used in Discord failure alerts
+PIPELINE_NAME = "Video Writer"
+
+# Set from main() when --dry-run is used so failure alerts don't fire on rehearsals
+_SUPPRESS_NOTIFICATIONS = False
+
+
+def _notify_failure(stage: str, title: str, detail: str) -> None:
+    """Send a red-embed Discord alert when the upload fails.
+
+    Silent no-op when DISCORD_WEBHOOK_URL is unset or _SUPPRESS_NOTIFICATIONS is True.
+    Never raises — a notification error must not mask the original failure.
+    """
+    if _SUPPRESS_NOTIFICATIONS:
+        return
+    try:
+        env_path = Path(__file__).resolve().parent.parent / ".env"
+        env = load_env(env_path)
+        webhook = os.environ.get("DISCORD_WEBHOOK_URL") or env.get("DISCORD_WEBHOOK_URL")
+        if not webhook:
+            return
+        payload = {
+            "embeds": [{
+                "title": f"\u274c Upload Failed: {title[:200]}",
+                "color": 0xef4444,
+                "fields": [
+                    {"name": "Stage", "value": stage[:100], "inline": True},
+                    {"name": "Pipeline", "value": PIPELINE_NAME, "inline": True},
+                    {"name": "Error", "value": f"```\n{detail[:900]}\n```", "inline": False},
+                ],
+                "footer": {"text": f"Green Energy Thailand \u2022 {PIPELINE_NAME}"},
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            }]
+        }
+        requests.post(webhook, json=payload, timeout=10)
+    except Exception:
+        pass
+
+
 def get_wp_config() -> tuple[str, str, str]:
     """Return (url, username, app_password) from env, or exit with error."""
     # Try .env file first, then environment variables
@@ -113,6 +152,11 @@ def get_wp_config() -> tuple[str, str, str]:
     if missing:
         print(f"Error: Missing WordPress credentials: {', '.join(missing)}")
         print("Set them in .env or as environment variables.")
+        _notify_failure(
+            "pre-flight",
+            "Missing WordPress credentials",
+            f"Not set: {', '.join(missing)}",
+        )
         sys.exit(1)
 
     # Strip trailing slash from URL
@@ -478,6 +522,8 @@ class WordPressClient:
         if "cloudwaysapps.com" in url:
             self.session.verify = False
         self.session.headers.update(self.auth)
+        # Last HTTP / transport error, set by failure paths so callers can surface it
+        self.last_error: str | None = None
 
     def test_connection(self) -> bool:
         """Verify credentials work."""
@@ -602,9 +648,11 @@ class WordPressClient:
             if resp.status_code in (200, 201):
                 return resp.json()
             else:
+                self.last_error = f"HTTP {resp.status_code}: {resp.text[:500]}"
                 print(f"  Post creation failed ({resp.status_code}): {resp.text[:500]}")
                 return None
         except requests.RequestException as e:
+            self.last_error = f"RequestException: {e}"
             print(f"  Post creation error: {e}")
             return None
 
@@ -924,6 +972,11 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
     print("\n[2/7] Testing connection...")
     if not dry_run and not client.test_connection():
         print("\nFailed to authenticate. Check your credentials.")
+        _notify_failure(
+            "authentication",
+            "Authentication failed",
+            f"WP_URL={wp_url}, user={wp_user}. See stdout for HTTP status.",
+        )
         sys.exit(1)
     elif dry_run:
         print("  [DRY RUN] Skipping connection test")
@@ -1175,6 +1228,11 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
         print(f"    Images:         {len(media_map)} uploaded")
     else:
         print("Failed to create draft. Check errors above.")
+        _notify_failure(
+            "post create",
+            meta.get("title", html_path.name),
+            client.last_error or "No response detail captured; see stdout for context.",
+        )
     print(f"{'=' * 60}\n")
 
     # Send Discord notification for new drafts
@@ -1240,11 +1298,30 @@ Environment (.env):
 
     args = parser.parse_args()
 
+    # Silence failure alerts during dry-run rehearsals
+    if args.dry_run:
+        global _SUPPRESS_NOTIFICATIONS
+        _SUPPRESS_NOTIFICATIONS = True
+
     if not args.html_file.exists():
         print(f"Error: File not found: {args.html_file}")
+        _notify_failure("pre-flight", "HTML file not found", str(args.html_file))
         sys.exit(1)
 
-    upload_article(args.html_file, args.images, dry_run=args.dry_run, category=args.category)
+    try:
+        upload_article(args.html_file, args.images, dry_run=args.dry_run, category=args.category)
+    except SystemExit:
+        raise
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"\nUnhandled exception: {e}\n{tb}")
+        _notify_failure(
+            "uncaught exception",
+            f"{type(e).__name__} in upload_article",
+            tb,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
