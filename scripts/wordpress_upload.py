@@ -77,19 +77,9 @@ AUTHOR_NAME = "Green Energy Thailand"
 # Environment loading
 # ---------------------------------------------------------------------------
 
-def load_env(env_path: Path) -> dict:
-    """Load .env file into a dict (simple key=value parser)."""
-    env = {}
-    if not env_path.exists():
-        return env
-    for line in env_path.read_text().splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" in line:
-            key, _, value = line.partition("=")
-            env[key.strip()] = value.strip()
-    return env
+# Shared loader for all GET pipelines lives at ../../shared/env_loader.py
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "shared"))
+from env_loader import load_env  # noqa: E402
 
 
 # Pipeline label used in Discord failure alerts
@@ -108,8 +98,7 @@ def _notify_failure(stage: str, title: str, detail: str) -> None:
     if _SUPPRESS_NOTIFICATIONS:
         return
     try:
-        env_path = Path(__file__).resolve().parent.parent / ".env"
-        env = load_env(env_path)
+        env = load_env()
         webhook = os.environ.get("DISCORD_WEBHOOK_URL") or env.get("DISCORD_WEBHOOK_URL")
         if not webhook:
             return
@@ -133,9 +122,7 @@ def _notify_failure(stage: str, title: str, detail: str) -> None:
 
 def get_wp_config() -> tuple[str, str, str]:
     """Return (url, username, app_password) from env, or exit with error."""
-    # Try .env file first, then environment variables
-    env_path = Path(__file__).resolve().parent.parent / ".env"
-    env = load_env(env_path)
+    env = load_env()
 
     url = os.environ.get("WORDPRESS_URL") or env.get("WORDPRESS_URL", "")
     username = os.environ.get("WORDPRESS_USERNAME") or env.get("WORDPRESS_USERNAME", "")
@@ -957,8 +944,7 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
     print("\n[1/7] Loading WordPress credentials...")
     if dry_run:
         # In dry-run mode, use placeholder credentials if not set
-        env_path = Path(__file__).resolve().parent.parent / ".env"
-        env = load_env(env_path)
+        env = load_env()
         wp_url = os.environ.get("WORDPRESS_URL") or env.get("WORDPRESS_URL", "https://example.com")
         wp_user = os.environ.get("WORDPRESS_USERNAME") or env.get("WORDPRESS_USERNAME", "dry-run")
         wp_pass = os.environ.get("WORDPRESS_APP_PASSWORD") or env.get("WORDPRESS_APP_PASSWORD", "dry-run")
@@ -1237,8 +1223,7 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
 
     # Send Discord notification for new drafts
     if post and post.get("id") and post.get("id") != 0:
-        _env_path = Path(__file__).resolve().parent.parent / ".env"
-        _env = load_env(_env_path)
+        _env = load_env()
         discord_webhook = os.environ.get("DISCORD_WEBHOOK_URL") or _env.get("DISCORD_WEBHOOK_URL")
         if discord_webhook:
             try:

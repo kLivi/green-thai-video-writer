@@ -15,7 +15,7 @@ Video-to-article pipeline for greenenergythailand.com. Takes a YouTube URL, extr
 - Image generation: fal.ai Seedream v4.5 via `prompts/visual-media.md`
 - Image processing: Pillow resize + WebP (see `scripts/wordpress_upload.py`)
 - Chart generation: SVG builder via `prompts/chart-rules.md` + `scripts/build_chart.py`
-- Research: Brave Search API
+- Research: Claude Code's built-in `WebSearch` tool (no project API key required)
 - **Thai policy/legal/rate claims**: see `/home/unify/Documents/green-energy-thailand/claude-blog/shared/thai-facts.md` (Royal Gazette rule, confirmed rates, bad sources)
 
 ## Handoff
@@ -24,10 +24,8 @@ Session state lives at: `/home/unify/Documents/Brain/green-energy-thailand/green
 
 ## Environment
 
-- `.env` symlinked from idea-writer (shared credentials)
-- `IMAGE_API_KEY` — fal.ai API key
-- `WORDPRESS_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD` — WordPress REST API
-- `BRAVE_SEARCH_API_KEY` — for supplementary research
+- Credentials live in the shared `.env` at `~/Documents/green-energy-thailand/.env` (sibling to all GET pipelines). Loaded via `~/Documents/green-energy-thailand/shared/env_loader.py`.
+- Keys consumed: `IMAGE_API_KEY` (fal.ai), `WORDPRESS_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APP_PASSWORD`, `DISCORD_WEBHOOK_URL` (failure + success notifications).
 - Python 3.12+ with requests, beautifulsoup4, pillow, yt-dlp
 
 ## Project Context
