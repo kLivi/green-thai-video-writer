@@ -212,6 +212,58 @@ location (e.g., a foreign project used as a comparison), use that location inste
 **People:** Max 1-2 images with people across all images per article. The
 rest should be objects, environments, or scenes.
 
+**Technical accuracy — energy equipment:**
+
+These scenes recur across solar/battery/generator articles, and image models
+get them wrong by default. Bake the correction into the prompt:
+
+- **Panels on the roof, equipment on the wall.** Solar panels mount on the
+  roof. Inverters, charge controllers, and batteries mount on a wall indoors
+  or in a utility/garage area — never on the roof. Do not prompt "inverter and
+  battery on the roof."
+- **Installed gear is wired in.** A battery or inverter with no visible cables
+  looks like a showroom display. Prompt for visible conduit and cables running
+  into the unit.
+- **A generator is a power source, not a load.** Never depict a generator's
+  cord plugged into a household wall outlet — that is backfeeding, which is
+  dangerous and wrong. Show it beside the house with a heavy cable running into
+  a wall conduit/junction box (hardwired to the inverter), or with no visible
+  hookup. Place it against a wall or under cover, not marooned in the middle of
+  a yard or far from the house.
+- **Match the setting to the topic.** Off-grid / rural articles → an isolated
+  rural home (e.g., a wooden Thai stilt farmhouse with fields, few or no
+  neighbors). Do not render a dense suburban street for an off-grid story.
+- **Right equipment for the claim.** A modern LiFePO4 home battery is a
+  wall-mounted white cabinet or stacked tower — not a row of blue lead-acid
+  car batteries.
+
+**Specific products — don't try to depict them with fal.ai.**
+
+When the topic centers on a specific real product (a named turbine, a
+particular inverter, a branded device), do NOT prompt fal.ai to render it.
+It has no reference for the actual product and will invent a generic look-alike
+that misrepresents the real thing — e.g. inventing free-standing propeller
+windmills for what is actually a roof-ridge ducted turbine. For the **cover**,
+generate a **conceptual scene** that conveys the topic without showing the
+product, and explicitly exclude it and any equipment — e.g. "a Thai house
+rooftop with wind-blown trees and a breezy sky, NO turbines, NO equipment, NO
+solar panels." A pretty-but-wrong product shot is worse than an honest
+conceptual one, especially for a real company's product. (A real **video
+frame** of the actual product is the exception — that's the genuine article,
+not an AI guess — but skip it if it's blurry or cluttered.)
+
+**Avoiding artifacts:**
+
+- Text always renders garbled. The "no text" rule won't stop the model from
+  stamping gibberish brand labels on machinery — pick the candidate with the
+  least legible text, or frame so labels stay small.
+- Do not put camera words in the prompt. "Phone snapshot" or "selfie" can
+  render an actual hand holding a phone in frame. For a candid look use
+  "realistic, candid, no people."
+- Skip golden hour. Sunset glow and lens flare read as stock/AI. Prefer
+  "plain daylight" or "overcast daylight."
+- For tricky equipment shots, generate 2 candidates and keep the better one.
+
 ### Image Usage Rules
 
 | Rule | Requirement |
