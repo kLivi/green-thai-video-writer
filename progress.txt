@@ -1,3 +1,24 @@
+## 2026-05-25 — Restored headless automation on Kimi K2.6; fixed Post 720 cover
+
+**Task**: Bring get-video back to unattended runs on the cheaper Kimi backend and fix a misleading AI-generated cover.
+
+**What was done**:
+- Rewrote `~/scripts/get-video-auto.sh` from reminder-only to a real `/get-video queue` run on Kimi K2.6 (Moonshot endpoint; `unset ANTHROPIC_API_KEY`), with WP-upload success detection + Discord embed.
+- Validated end-to-end: produced WP draft Post 720 (RidgeBlade turbine, 2,234 words, 1 chart + video frames).
+- Replaced 720's cover — fal.ai invented generic propeller windmills for the real ducted product; swapped for a conceptual windy-Thai-rooftop scene with a composited "?" (set via WP REST `featured_media`; body untouched).
+- Committed `visual-media.md` guidance (incl. pre-existing energy-equipment blocks) so AI no longer attempts specific products.
+
+**Files changed**:
+- prompts/visual-media.md (product-cover + energy-equipment guidance)
+- ~/scripts/get-video-auto.sh (reminder → real Kimi run; live/untracked)
+- output/images/ridgeblade-home-wind-turbine-thailand-featured.webp (new conceptual cover)
+
+**Result**:
+- get-video runs headless on Kimi; next scheduled fire Sun 2026-06-01 produces a real article.
+- Post 720's cover no longer misrepresents the product.
+
+---
+
 ## 2026-04-04 — Chart generation standardization
 
 **Task**: Align chart generation with claude-blog pipeline using build_chart.py script.
@@ -164,3 +185,11 @@
 - Next video (BIPV) should have better visual content from building sites
 - Discord notification working correctly (fired immediately after draft creation)
 
+
+## 2026-04-13 — Handoff cleanup
+
+Moved from handoff.md:
+
+**2026-04-04:** Standardized chart generation to use build_chart.py (copied from claude-blog).
+**2026-03-27:** Fixed Discord notification bug — `DISCORD_WEBHOOK_URL` only read from `os.environ`, not `.env`.
+**2026-03-25:** Added Discord draft notifications + video frame extraction.
