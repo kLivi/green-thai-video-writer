@@ -1,3 +1,25 @@
+## 2026-05-27 — Manual article: Thailand EV boom (BBC podcast, GvPPsPT8GEQ)
+
+**Task**: Turn a BBC World Service EV podcast into a Thailand-only article, with home-solar EV charging as a minor angle.
+
+**What was done**:
+- Processed manual URL (BBC "EV boom in Thailand and Vietnam", 25:55); needed `--remote-components ejs:github` to fetch manual EN subtitles past the yt-dlp n-challenge.
+- Skipped all Vietnam/Vinfast content per request; kept home-solar charging to one paragraph + one FAQ (framed as self-consumption since net-billing quota is frozen).
+- Reconciled video figures with verified sources (Nation Thailand: 120,301 BEVs 2025 +80%, ~19-21% share; Low-Carbon Power: fossil >2/3, gas >50%, coal ~15%). Used video's 1%→24% framing for the "24x" title at Keith's request.
+- 4 fal.ai images (cover + showroom + charging cable + rooftop solar), 2 build_chart.py charts (sales-share growth, grid mix).
+
+**Files changed**:
+- output/thailand-ev-boom-24x-growth.html (new)
+- output/images/thailand-ev-boom-24x-growth-{featured,showroom,charging-cable,rooftop-solar}.webp (new)
+
+**Result**:
+- WP draft Post 743 created (1,589 words, category Electric Vehicles & Clean Transport, schema + RankMath set, Discord fired). Awaiting human review/publish.
+- ⚠️ Upload slug generator stripped "ev" as a stopword → slug `thailand-boom-24x-growth` (dropped the EV). Bad for an EV blog; worth fixing the stopword list.
+
+**Next steps**: Review/publish WP draft 743 (fix slug to include "ev"); then verify the scheduled run Sun 2026-06-01 completes cleanly and re-enable `Watchdog-GetVideo`.
+
+---
+
 ## 2026-05-25 — Restored headless automation on Kimi K2.6; fixed Post 720 cover
 
 **Task**: Bring get-video back to unattended runs on the cheaper Kimi backend and fix a misleading AI-generated cover.
