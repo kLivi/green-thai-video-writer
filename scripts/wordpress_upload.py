@@ -54,6 +54,9 @@ FILLER_WORDS = {
     "the", "a", "an", "for", "with", "and", "how", "to", "in", "on", "of",
     "is", "are", "your", "my", "our", "this", "that", "its", "does", "do",
     "can", "will", "what", "why", "when", "where", "which", "who",
+    # Two-letter function words — listed explicitly so the length filter can
+    # drop to len > 1 and still keep meaningful acronyms (EV, PV, AC, DC).
+    "as", "at", "by", "or", "it", "we", "us", "if", "be", "so", "up", "no",
 }
 
 CONTENT_TYPE_MAP = {
@@ -264,7 +267,7 @@ def _derive_focus_keyword(title: str) -> str:
     title = re.sub(r"\b(a |an |the |how to |what is |why |when |where )\b", " ", title.lower())
     title = re.sub(r"\b(20\d{2})\b", "", title)  # Remove years
     title = re.sub(r"[:\-\|–—?!]", " ", title)
-    words = [w for w in title.split() if w not in FILLER_WORDS and len(w) > 2]
+    words = [w for w in title.split() if w not in FILLER_WORDS and len(w) > 1]
     # Take first 3-4 meaningful words
     return " ".join(words[:4]).strip()
 
@@ -486,7 +489,7 @@ def generate_slug(title: str) -> str:
     slug = re.sub(r"\b(20\d{2})\b", "", slug)  # Remove years
     words = slug.split()
     # Filter filler words, keep meaningful ones
-    meaningful = [w for w in words if w not in FILLER_WORDS and len(w) > 2]
+    meaningful = [w for w in words if w not in FILLER_WORDS and len(w) > 1]
     # Take 2-4 keywords
     slug_words = meaningful[:4]
     return "-".join(slug_words)
