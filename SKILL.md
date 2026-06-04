@@ -171,6 +171,7 @@ Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
 - Cite all external statistics inline with source name, year, and hyperlink
 - Include FAQ section
 - Target 1500-2500 words
+- **Internal links:** When you add an in-article internal link, point it to a specific post at `/posts/{slug}/` — never to a `/category/` archive page. (Most internal links are added automatically by the linking pipeline after publish; only add one inline when it genuinely helps the reader.)
 - **Pillar phrase requirement:** The article MUST use at least one of the pillar's `pillar_phrases` from `src/config/categories.json` naturally in the body text. This enables the internal linking pipeline to create upward links to the pillar page. Check the chosen pillar's phrases and weave one in — e.g., for a Solar Energy article, use "solar energy" or "solar power" at least once.
 
 **Image markers:** Two types of image marker:
