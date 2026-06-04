@@ -11,7 +11,7 @@ Usage:
     python scripts/wordpress_upload.py output/article.html --dry-run
 
 Environment variables (in .env):
-    WORDPRESS_URL           https://wordpress-1171553-6117772.cloudwaysapps.com
+    WORDPRESS_URL           https://cms.greenenergythailand.com
     WORDPRESS_USERNAME      your-username
     WORDPRESS_APP_PASSWORD  xxxx xxxx xxxx xxxx xxxx xxxx
 
@@ -1274,7 +1274,7 @@ Examples:
     python scripts/wordpress_upload.py output/article.html --dry-run
 
 Environment (.env):
-    WORDPRESS_URL=https://wordpress-1171553-6117772.cloudwaysapps.com
+    WORDPRESS_URL=https://cms.greenenergythailand.com
     WORDPRESS_USERNAME=admin
     WORDPRESS_APP_PASSWORD=xxxx xxxx xxxx xxxx
         """,
