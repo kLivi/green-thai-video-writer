@@ -215,3 +215,14 @@ Moved from handoff.md:
 **2026-04-04:** Standardized chart generation to use build_chart.py (copied from claude-blog).
 **2026-03-27:** Fixed Discord notification bug — `DISCORD_WEBHOOK_URL` only read from `os.environ`, not `.env`.
 **2026-03-25:** Added Discord draft notifications + video frame extraction.
+
+## Session – 2026-06-04 — CMS-subdomain host migration
+
+WordPress host migrated from the cloudwaysapps staging host to
+cms.greenenergythailand.com (valid auto-renewing cert) as part of the site-wide
+broken-images fix. host example updated to cms; verify guard already conditional; verify=False now applies only to the legacy
+cloudwaysapps host (conditional). Full record + root-cause analysis in
+green-energy-thailand-blog/progress.txt and
+green-energy-thailand-blog/docs/plans/2026-06-04-cms-subdomain-migration.md.
+
+Next steps: none — config change only; pipeline behaviour unchanged.
