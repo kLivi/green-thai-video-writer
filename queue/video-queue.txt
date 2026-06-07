@@ -28,9 +28,9 @@ DONE: https://www.youtube.com/watch?v=y2hg6mxX76Y
 # --- EVs ---
 DONE: https://www.youtube.com/watch?v=Q07R21FYZU4
 # CNA Correspondent: Thailand EV future with BYD and electric tuk-tuks (22 min)
-VETTED: https://www.youtube.com/watch?v=9nW7RH0OrUw
+SKIP: https://www.youtube.com/watch?v=9nW7RH0OrUw
 # BYD opens first EV factory in Thailand
-VETTED: https://www.youtube.com/watch?v=6k48VpAS_uM
+DONE: VETTED: https://www.youtube.com/watch?v=6k48VpAS_uM
 # Thailand in the race for EV mass adoption — emissions targets and strategy
 
 # --- Energy Storage ---
