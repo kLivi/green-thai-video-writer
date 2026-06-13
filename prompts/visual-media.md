@@ -233,9 +233,21 @@ get them wrong by default. Bake the correction into the prompt:
 - **Match the setting to the topic.** Off-grid / rural articles → an isolated
   rural home (e.g., a wooden Thai stilt farmhouse with fields, few or no
   neighbors). Do not render a dense suburban street for an off-grid story.
-- **Right equipment for the claim.** A modern LiFePO4 home battery is a
-  wall-mounted white cabinet or stacked tower — not a row of blue lead-acid
-  car batteries.
+- **Batteries — match the form factor to what the article depicts.** Decide
+  what is physically in frame before writing the prompt; form factor, not
+  chemistry, is what the image must get right. A finished home or business
+  storage system (any modern chemistry — LFP, NMC, sodium-ion) is a
+  wall-mounted cabinet, a floor-standing stacked tower, or rack-mounted
+  modules, with conduit and cables running in — these chemistries look
+  identical once enclosed, so describe the enclosure, not the chemistry name.
+  Other cases look genuinely different, and there the chemistry or scale drives
+  the form: a flow battery is tanks and pumps; a technology explainer about the
+  cells themselves shows exposed cylindrical, prismatic, or pouch cells;
+  grid-scale storage is container-style units in a yard. **Never** default to a
+  row of blue lead-acid car batteries with terminal posts unless the article is
+  specifically about lead-acid — it is the model's most common battery mistake,
+  so override it explicitly. Keep the chemistry in the alt text (accurate and
+  useful for SEO); put the form factor in the generation prompt.
 
 **Specific products — don't try to depict them with fal.ai.**
 
