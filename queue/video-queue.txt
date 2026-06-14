@@ -34,7 +34,7 @@ DONE: VETTED: https://www.youtube.com/watch?v=6k48VpAS_uM
 # Thailand in the race for EV mass adoption — emissions targets and strategy
 
 # --- Energy Storage ---
-VETTED: https://www.youtube.com/watch?v=yp3JZHXqgl0
+DONE: VETTED: https://www.youtube.com/watch?v=yp3JZHXqgl0
 # Full episode deep dive on energy storage systems (Thai-language)
 VETTED-RESEARCH: https://www.youtube.com/watch?v=3DNCKvQacIo
 # Thailand's green power revolution for data centers
