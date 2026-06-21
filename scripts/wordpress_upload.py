@@ -804,6 +804,12 @@ _SUBCATEGORY_KEYWORDS: list[tuple[str, str, str]] = [
     ("green certif",         "Certification & Standards",                        "Green Buildings & Energy Efficiency"),
     ("trees",                "Certification & Standards",                        "Green Buildings & Energy Efficiency"),
     ("building standard",    "Certification & Standards",                        "Green Buildings & Energy Efficiency"),
+    ("building material",    "Sustainable Building Materials",                    "Green Buildings & Energy Efficiency"),
+    ("concrete",             "Sustainable Building Materials",                    "Green Buildings & Energy Efficiency"),
+    ("cement",               "Sustainable Building Materials",                    "Green Buildings & Energy Efficiency"),
+    ("mass timber",          "Sustainable Building Materials",                    "Green Buildings & Energy Efficiency"),
+    ("hempcrete",            "Sustainable Building Materials",                    "Green Buildings & Energy Efficiency"),
+    ("bamboo construct",     "Sustainable Building Materials",                    "Green Buildings & Energy Efficiency"),
     # Policy, Economics & Thailand Context
     ("subsid",               "Incentives, Subsidies & Tax Breaks",               "Policy, Economics & Thailand Context"),
     ("incentive",            "Incentives, Subsidies & Tax Breaks",               "Policy, Economics & Thailand Context"),
@@ -876,6 +882,7 @@ SILO_CATEGORY_IDS: dict[str, dict[str, int]] = {
         "Practical Energy Efficiency": 96,
         "District Cooling Systems": 97,
         "Certification & Standards": 98,
+        "Sustainable Building Materials": 116,
     },
     "Policy, Economics & Thailand Context": {
         "_pillar": 99,
@@ -1003,6 +1010,19 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
             alt_lookup[basename] = img_info["alt"]
             referenced_filenames.add(basename)
 
+        # The cover/featured image is referenced via an <!-- coverImage: ... -->
+        # comment (parsed into meta["cover_image_local"]), NOT an <img> tag — so it
+        # is absent from meta["images"]. Add it explicitly, otherwise the filter
+        # below drops it: the cover never uploads and we silently fall back to an
+        # inline image as featured_media (the post-1052 broken-cover bug, which
+        # forced a manual recovery that reintroduced relative inline src).
+        cover_local = meta.get("cover_image_local", "")
+        cover_name = None
+        if cover_local and not cover_local.startswith("http"):
+            cover_name = Path(cover_local).name
+            referenced_filenames.add(cover_name)
+            alt_lookup.setdefault(cover_name, (meta.get("title") or "").strip())
+
         # Only upload images that are actually referenced in the HTML
         image_files = sorted(images_dir.glob("*"))
         image_files = [f for f in image_files if f.suffix.lower() in CONTENT_TYPE_MAP and f.name in referenced_filenames]
@@ -1024,9 +1044,10 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
                 }
                 print(f"    -> ID: {media['id']}, URL: {source_url[:80]}")
 
-                # Detect cover image (ends in -featured)
+                # Detect cover image: matches the coverImage comment filename, or
+                # falls back to the -featured naming convention.
                 stem = img_file.stem.lower()
-                if stem.endswith("-featured"):
+                if (cover_name and img_file.name == cover_name) or stem.endswith("-featured"):
                     cover_media_id = media["id"]
                     cover_media_url = source_url
                     print(f"    -> Set as featured image")
@@ -1283,6 +1304,8 @@ Environment (.env):
     parser.add_argument("--images", type=Path, default=None, help="Path to images directory (default: <html_dir>/images)")
     parser.add_argument("--category", type=str, default=None, help="WordPress category name (pillar from categories.json). If omitted, derived from title keywords.")
     parser.add_argument("--dry-run", action="store_true", help="Parse and show what would be uploaded without making API calls")
+    parser.add_argument("--verify", action="store_true", help="After a successful upload, run verify_publish.py on the new post and exit non-zero if it fails")
+    parser.add_argument("--require-chart", action="store_true", help="With --verify, treat a missing chart as a hard failure")
 
     args = parser.parse_args()
 
@@ -1297,7 +1320,7 @@ Environment (.env):
         sys.exit(1)
 
     try:
-        upload_article(args.html_file, args.images, dry_run=args.dry_run, category=args.category)
+        post = upload_article(args.html_file, args.images, dry_run=args.dry_run, category=args.category)
     except SystemExit:
         raise
     except Exception as e:
@@ -1310,6 +1333,27 @@ Environment (.env):
             tb,
         )
         sys.exit(1)
+
+    # Atomic publish gate: verify the live post is actually correct (absolute
+    # img src, images resolve, featured-is-cover, schema present, no leftover
+    # markers). A pass here is the real success signal — not merely "a draft
+    # exists". Skipped on dry-run (no post created).
+    if args.verify and not args.dry_run:
+        post_id = (post or {}).get("id")
+        if not post_id:
+            print("\nVerify: upload returned no post id — treating as failure.")
+            _notify_failure("post-publish verification", "No post id after upload", str(args.html_file))
+            sys.exit(1)
+        import subprocess
+        cmd = [sys.executable, str(Path(__file__).resolve().parent / "verify_publish.py"), str(post_id)]
+        if args.require_chart:
+            cmd.append("--require-chart")
+        print(f"\n[verify] Running post-publish gate on post {post_id}...")
+        rc = subprocess.run(cmd).returncode
+        if rc != 0:
+            print(f"[verify] Post {post_id} FAILED verification — see Discord alert.")
+            sys.exit(1)
+        print(f"[verify] Post {post_id} passed.")
 
 
 if __name__ == "__main__":

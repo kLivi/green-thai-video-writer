@@ -226,3 +226,106 @@ green-energy-thailand-blog/progress.txt and
 green-energy-thailand-blog/docs/plans/2026-06-04-cms-subdomain-migration.md.
 
 Next steps: none — config change only; pipeline behaviour unchanged.
+
+---
+2026-06-07
+Task: /get-video queue — process next vetted video
+Video: Thailand Times: Thailand in the Race for EV Mass Adoption (Asian Development Bank)
+URL: https://www.youtube.com/watch?v=6k48VpAS_uM
+Results:
+- Article written and published as WordPress draft
+- Title: "Thailand's EV Mass Adoption: What ADB Experts Predicted in 2023 and What Actually Happened"
+- Slug: thailand-ev-mass-adoption
+- Post ID: 857
+- Category: Electric Vehicles & Clean Transport
+- Word count: ~2,100
+- Images: 4 (1 cover + 3 inline), all AI-generated via fal.ai Seedream v4.5
+- Charts: 1 donut chart (Thailand EV Charging Network Share 2025)
+- Credibility: Medium-High
+- Skipped previous queue entry (BYD CNA video) due to no transcript available
+Next steps:
+- Review draft in WordPress before publishing
+- Run internal linking pipeline after publish
+
+2026-06-14 — /get-video queue
+Video: yp3JZHXqgl0 (Thailand Quality Hub — Energy Storage deep dive, Thai-language, 9:04)
+- Thai auto-subtitles extracted (274 words)
+- Data extracted: EGAT Khao Kho wind farm 24 MW + 1 MW lithium battery, Thap Sakae solar+battery model
+- Research: Thailand BESS pipeline, EGAT 42 MW operational, PDP 2037 10 GW target, Royal Decree No. 805, BOI incentives
+- Article: Inside Thailand's First Grid-Scale Battery: How EGAT Uses 1 MW of Storage to Tame Wind Power at Khao Kho
+- Word count: ~1,900 words
+- Images: 3 AI-generated + 1 video frame
+- Chart: 1 donut chart (EGAT BESS portfolio)
+- WordPress draft: Post ID 901, category Energy Storage & Grid Infrastructure
+- Queue: marked DONE
+
+---
+
+## 2026-06-19 — Wire "Sustainable Building Materials" subcategory (cat 116)
+
+**Task**: Add the new Green Buildings subcategory so materials/techniques articles aren't published pillar-only (which orphaned get-internal-linking post 941).
+
+**What was done**:
+- Added `"Sustainable Building Materials": 116` to the Green Buildings block in `SILO_CATEGORY_IDS` (scripts/wordpress_upload.py).
+- Added 6 `_SUBCATEGORY_KEYWORDS` triggers (building material / concrete / cement / mass timber / hempcrete / bamboo construct) so a materials video self-classifies into 116.
+
+**Result**: `resolve_silo_categories(...,"Sustainable Building Materials") → [95,116]`. Change made by get-internal-linking session 24; commit pending (Keith).
+
+---
+
+## 2026-06-21 — /get-video queue
+
+**Task**: Process next vetted video (VETTED-RESEARCH: Thailand's green power revolution for data centers)
+
+**Video**: Thailand Breaking News — "Thailand's Green Power Revolution for Data Centers!" (1:01)
+**URL**: https://www.youtube.com/watch?v=3DNCKvQacIo
+
+**What was done**:
+- Extracted English auto-subtitles (143 words — very thin source)
+- VETTED-RESEARCH supplement: 3 WebSearch queries covering Thailand data center DPPA policy, hyperscaler investments, REC/UGT frameworks
+- Research synthesized into article: policy deep dive, investment table, regulatory status, Thai context (UGT2, I-RECs, EGAT), challenges
+- Flagged unsourced "80% green" claim from video as likely exaggerated; corrected with actual BOI/Direct PPA requirements
+- Article: "Green Power for Data Centers in Thailand: A 2,000 MW Pilot Attracting $23.5 Billion in Tech Investment"
+- Word count: ~1,850 words
+- Charts: 2 (horizontal bar: projected demand 2030/2037; donut: target energy mix 2037) via build_chart.py
+- Images: 4 AI-generated via fal.ai Seedream v4.5 (cover 1200×630, inline landscape 650×366, inline portrait 450×600, inline square 550×550)
+- Uploaded to WordPress: Post ID 1052, slug `green-power-data-centers`
+- Fixed featured image fallback (script missed cover-only comment → uploaded cover separately and set as featured_media)
+- Category: Policy, Economics & Thailand Context (pillar only; no subcategory keyword match in title)
+- RankMath + JSON-LD schema auto-generated; Discord notification sent ✓
+
+**Queue**: marked DONE
+
+**Next steps**: Review/publish WP draft 1052; run internal linking pipeline after publish.
+
+---
+
+## 2026-06-21 — Fix post 1052 broken images + stale dates; harden publish path
+
+**Task**: Repair published draft 1052 (all inline images broken, several project completion dates now past), then close the root-cause that produced it.
+
+**What was done**:
+- Diagnosed via the scheduled-run log + media timestamps: `wordpress_upload.py` filters uploads to filenames appearing as `<img>` tags, but the cover is referenced via `<!-- coverImage -->` comment only → cover dropped, featured fell back to an inline image → headless Kimi did manual recovery (`update_post.py`) that re-posted the body with relative `images/` src → broken inline images.
+- Fix #1: cover (`*-featured` / coverImage comment) now added to the upload set; cover detection matches the manifest filename (wordpress_upload.py).
+- Fix #2: new `scripts/verify_publish.py` post-publish gate (absolute img src, img 200s, featured-is-cover, schema, no leftover markers). Calibrated against live posts 941/1040/1052.
+- Fix #3: moved publish into the shell — agent writes article + `publish-manifest.json` and stops; `get-video-auto.sh` runs `wordpress_upload.py --verify` and consumes the queue only on verified success. Added `--verify` flag to wordpress_upload.py; updated get-video SKILL.md Step 7 + queue-consume contract.
+- Repaired 1052: re-uploaded 3 inline images (1057-59) + rewrote src; injected schema JSON-LD; verified all 9 gate checks pass.
+- Date corrections on 1052 (web-researched): Google Chonburi 2026→early 2027; AWS launched Jan 2025; UGT2 live Mar 2026 ~4.56 THB/kWh; TikTok detail notes ~$25B May 2026 expansion.
+- Deleted orphan media 1049-51 (verified unreferenced across 56 posts), deleted buggy `update_post.py`, removed `EOF` junk file.
+
+**Files changed**:
+- scripts/wordpress_upload.py (cover-detection fix; `--verify` flag + atomic verify gate)
+- scripts/verify_publish.py (new — post-publish verification gate)
+- scripts/fix_images.py, scripts/fix_schema_1052.py (new — one-off 1052 repairs)
+- ~/scripts/get-video-auto.sh (deterministic shell publish + verify gate; queue consumed post-verify) — NOTE: ~/scripts is not a git repo, unversioned
+- ~/.claude/skills/get-video/SKILL.md (Step 7 manifest+publish contract; queue mark-done deferred to shell)
+- scripts/update_post.py (deleted), EOF (deleted)
+
+**Result**:
+- Post 1052 draft now clean — images load, dates current, schema present, gate passes 9/9.
+- Publish path is now deterministic + self-verifying; a broken publish fails loud and does NOT consume the vetted queue entry.
+- ⚠️ Fix #3 full headless path (Kimi writes manifest + stops, shell publishes) NOT yet validated on a live run — only unit-tested (dry-run, bash -n, parse/queue-mark sims).
+- ⚠️ Pre-existing defect found (other pipeline): post 1040 has a malformed `<img>` — get-internal-linking injected `<a href>` into an alt attribute.
+- ⚠️ Kimi-leftover scripts `fix_cover.py`, `generate_images.py` still present (dead manual-publish path).
+
+**Next steps**: Validate Fix #3 with a live headless run (manual trigger of get-video-auto.sh or next scheduled run); confirm draft 1052 published + internal-linking run.
