@@ -490,8 +490,9 @@ def generate_slug(title: str) -> str:
     words = slug.split()
     # Filter filler words, keep meaningful ones
     meaningful = [w for w in words if w not in FILLER_WORDS and len(w) > 1]
-    # Take 2-4 keywords
-    slug_words = meaningful[:4]
+    # Keep the full keyword set (bounded) so the slug isn't truncated mid-phrase;
+    # the 4-word cap dropped the tail (e.g. "...economic-sense-in-thailand").
+    slug_words = meaningful[:9]
     return "-".join(slug_words)
 
 
