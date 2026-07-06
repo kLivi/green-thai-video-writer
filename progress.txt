@@ -329,3 +329,15 @@ Video: yp3JZHXqgl0 (Thailand Quality Hub — Energy Storage deep dive, Thai-lang
 - ⚠️ Kimi-leftover scripts `fix_cover.py`, `generate_images.py` still present (dead manual-publish path).
 
 **Next steps**: Validate Fix #3 with a live headless run (manual trigger of get-video-auto.sh or next scheduled run); confirm draft 1052 published + internal-linking run.
+
+---
+
+## 2026-07-07 — --verify default-on (publish-gate hardening, ported from claude-blog)
+
+**Task**: Close the same bare-invocation publish hole found + fixed in claude-blog (post 1243 shipped a broken image via a direct wordpress_upload.py call that skipped --verify).
+
+**What was done**:
+- `scripts/wordpress_upload.py`: `--verify` flipped from opt-in (`store_true`) to default-ON (`argparse.BooleanOptionalAction`, `--no-verify` to opt out). The post-publish `verify_publish.py` gate (relative/broken img src + leftover markers) can no longer be skipped by omitting the flag.
+- Not ported: claude-blog fixes 1/2 (strip `[UNIQUE INSIGHT]`/`[ORIGINAL DATA]`) — this writer does not emit info-gain markers.
+
+**Result**: scheduled runner already passed `--verify`; default-on now also covers ad-hoc/direct invocations. Syntax-checked, committed, pushed.
