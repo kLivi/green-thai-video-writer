@@ -1305,7 +1305,7 @@ Environment (.env):
     parser.add_argument("--images", type=Path, default=None, help="Path to images directory (default: <html_dir>/images)")
     parser.add_argument("--category", type=str, default=None, help="WordPress category name (pillar from categories.json). If omitted, derived from title keywords.")
     parser.add_argument("--dry-run", action="store_true", help="Parse and show what would be uploaded without making API calls")
-    parser.add_argument("--verify", action="store_true", help="After a successful upload, run verify_publish.py on the new post and exit non-zero if it fails")
+    parser.add_argument("--verify", action=argparse.BooleanOptionalAction, default=True, help="After a successful upload, run verify_publish.py on the new post and exit non-zero if it fails. Default ON — pass --no-verify to skip (e.g. re-hosting an already-verified post).")
     parser.add_argument("--require-chart", action="store_true", help="With --verify, treat a missing chart as a hard failure")
 
     args = parser.parse_args()
