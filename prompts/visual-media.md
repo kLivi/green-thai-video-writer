@@ -179,6 +179,51 @@ article — use different sizes for each inline image. Include at least one port
 Describe what would naturally appear in the scene — what a person standing there
 would actually see and photograph.
 
+**Fakeness-risk check — run on EVERY `[IMAGE]` before writing its prompt.**
+
+The one test: has the model seen thousands of generic photos of *this exact
+subject*, and does the image's truth survive without any invisible, novel, or
+branded detail? Both yes → **LOW**. Either no → **HIGH**. Risk is per-image, not
+per-article — one LOW article can hold one LOW image and one HIGH image (e.g. a
+"solar tilt angle" article: generic panels angled on a roof = LOW, photoreal is
+fine; "the Acme robotic tilt system" = HIGH, branded + a novel mechanism the
+model has never seen).
+
+HIGH-risk triggers (any domain — battery, wind, biofuel, grid, solar):
+- A brand, model, or company is named (GM, Vestas, a specific operator)
+- A proprietary or novel process/mechanism where the distinguishing feature is
+  technical or invisible — chemistry, turbine design, feedstock pathway, reactor type
+- "New / next-gen / first-of" or not-yet-built — absent from training data
+- A specific named facility or place (a named biorefinery, a named wind farm)
+- The image is meant to *prove a claim* — a count, a spec, a cutaway, "floating offshore"
+
+LOW-risk = generic, common, visually distinct: a turbine in a field, solar on a
+roof, an EV at a charger, transmission lines, a fuel pump, a dam, a forest. The
+everyday object, not the breakthrough.
+
+- **LOW** → generate photoreal as normal (all rules below apply).
+- **HIGH** → do NOT photoreal the subject. Default to the proxy; the others are
+  for specific cases:
+  1. **Stakes proxy (default)** — render the generic application or the Thai
+     context, not the breakthrough (a plain wind farm on a Thai coast; an EV at a
+     Bangkok charger). A conceptual scene with explicit exclusions works well —
+     e.g. "a Thai house rooftop with wind-blown trees and a breezy sky, NO
+     turbines, NO equipment, NO solar panels." The specific fact lives in body
+     text, where words render fine.
+  2. **Diagram** — only if the point is genuinely *how it works* / the novel
+     mechanism — schematic, labeled, not photoreal.
+  3. **Chart (last resort)** — only if the image was really standing in for a
+     statistic (cost, energy density, range, efficiency) and no honest photo
+     exists — emit a `[CHART]` instead of forcing a fake product shot.
+
+Always strip brand, facility, and novelty nouns from the image prompt (keep them
+in body text and chart labels). Never ask fal.ai for a logo or a specific real
+product — it invents a generic look-alike that misrepresents the real thing.
+
+**Video-writer:** prefer a real `[FRAME:]` from the source video over any
+HIGH-risk fal.ai image whenever the video shows the subject — a real frame is
+the genuine article, not an AI guess (skip it only if blurry or cluttered).
+
 **Location context:** Identify the primary location from the article topic and
 include it naturally in each prompt. If a specific image references a different
 location (e.g., a foreign project used as a comparison), use that location instead.
@@ -248,21 +293,6 @@ get them wrong by default. Bake the correction into the prompt:
   specifically about lead-acid — it is the model's most common battery mistake,
   so override it explicitly. Keep the chemistry in the alt text (accurate and
   useful for SEO); put the form factor in the generation prompt.
-
-**Specific products — don't try to depict them with fal.ai.**
-
-When the topic centers on a specific real product (a named turbine, a
-particular inverter, a branded device), do NOT prompt fal.ai to render it.
-It has no reference for the actual product and will invent a generic look-alike
-that misrepresents the real thing — e.g. inventing free-standing propeller
-windmills for what is actually a roof-ridge ducted turbine. For the **cover**,
-generate a **conceptual scene** that conveys the topic without showing the
-product, and explicitly exclude it and any equipment — e.g. "a Thai house
-rooftop with wind-blown trees and a breezy sky, NO turbines, NO equipment, NO
-solar panels." A pretty-but-wrong product shot is worse than an honest
-conceptual one, especially for a real company's product. (A real **video
-frame** of the actual product is the exception — that's the genuine article,
-not an AI guess — but skip it if it's blurry or cluttered.)
 
 **Avoiding artifacts:**
 
