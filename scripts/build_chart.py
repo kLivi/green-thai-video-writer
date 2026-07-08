@@ -82,6 +82,8 @@ def _frame(height: float, unit: str, title: str, source: str, body: str) -> str:
                    f'<text x="45" y="33" font-size="11" font-weight="600" letter-spacing="1.2" '
                    f'font-family="{SANS}" fill="{AMBER}">{_esc(unit.upper())}</text>')
     title_y = 56 if unit else 44
+    # Shrink long titles so they don't overflow the 560-wide card at 19px.
+    tsize = 19 if len(title) <= 44 else (16 if len(title) <= 56 else 14)
     return (
         f'<figure style="margin:1.5rem 0">\n'
         f'<svg viewBox="0 0 {W} {height:.0f}" style="max-width:100%;height:auto" '
@@ -90,7 +92,7 @@ def _frame(height: float, unit: str, title: str, source: str, body: str) -> str:
         f'<rect x="1.5" y="1.5" width="{W-3}" height="{height-3:.0f}" rx="14" '
         f'fill="{PANEL}" stroke="{LINE}" stroke-width="1"/>\n'
         f'{eyebrow}\n'
-        f'<text x="32" y="{title_y}" font-size="19" font-weight="700" '
+        f'<text x="32" y="{title_y}" font-size="{tsize}" font-weight="700" '
         f'font-family="{SERIF}" fill="{INK}">{_esc(title)}</text>\n'
         f'{body}\n{src}\n</svg>\n</figure>'
     )
@@ -215,7 +217,7 @@ def _xy_plot(title, data, unit, source, filled):
     for i in range(5):
         gy = top + (chh / 4) * i
         body.append(f'<line x1="{left}" y1="{gy:.0f}" x2="{right}" y2="{gy:.0f}" stroke="{INK}" opacity="0.07"/>')
-        val = mx - (rng / 4) * i
+        val = round(mx - (rng / 4) * i, 2)  # round to kill float noise on axis labels
         body.append(f'<text x="{left-8}" y="{gy+4:.0f}" text-anchor="end" font-size="10" '
                     f'font-family="{SANS}" fill="{MUTE}">{_fmt(val)}</text>')
     pts = [(left + (i / max(n-1, 1)) * cw, bot - ((v - mn) / rng) * chh) for i, v in enumerate(values)]
@@ -267,7 +269,7 @@ def _grouped_bar(title: str, data: dict, **kwargs) -> str:
     for i in range(5):
         gy = plot_top + (ch / 4) * i
         body.append(f'<line x1="{left}" y1="{gy:.0f}" x2="{right}" y2="{gy:.0f}" stroke="{INK}" opacity="0.07"/>')
-        val = mx - (mx / 4) * i
+        val = round(mx - (mx / 4) * i, 2)  # round to kill float noise on axis labels
         body.append(f'<text x="{left-8}" y="{gy+4:.0f}" text-anchor="end" font-size="10" '
                     f'font-family="{SANS}" fill="{MUTE}">{_fmt(val)}</text>')
     for gi, lab in enumerate(labels):
