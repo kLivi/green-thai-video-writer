@@ -91,9 +91,14 @@ def _horizontal_bar(title: str, data: dict, **kwargs) -> str:
 
     max_val = max(values) if values else 1
     chart_top = 60 if subtitle else 50
-    bar_area_height = 300
-    bar_height = min(24, bar_area_height // n - 8)
-    spacing = bar_area_height / n
+    # Even, capped row spacing centered in the available band. A fixed bar_area
+    # divided by n flung few bars to the far top/bottom (150px slots for 2 bars);
+    # cap the row height so few bars cluster, then center the block vertically.
+    area_bottom = 350  # leave room for the source line at y=370
+    available = area_bottom - chart_top
+    row_h = min(48, available / n)
+    bar_height = max(6, min(24, int(row_h) - 16))
+    block_top = chart_top + (available - row_h * n) / 2
     bar_width_max = 350
     label_x = 140
 
@@ -101,14 +106,14 @@ def _horizontal_bar(title: str, data: dict, **kwargs) -> str:
     svg += _svg_title_block(title, subtitle)
 
     for i, (label, val) in enumerate(zip(labels, values)):
-        y = chart_top + i * spacing
-        cy = y + bar_height / 2
+        cy = block_top + i * row_h + row_h / 2
+        y = cy - bar_height / 2
         w = (val / max_val) * bar_width_max if max_val else 0
         color = _get_color(i, label, highlight)
 
-        svg += f'<text x="{label_x - 5}" y="{cy + 4}" text-anchor="end" font-size="12" {TEXT_FILL} opacity="0.8">{_esc(label)}</text>\n'
-        svg += f'<rect x="{label_x}" y="{y}" width="{w:.0f}" height="{bar_height}" rx="3" fill="{color}"/>\n'
-        svg += f'<text x="{label_x + w + 6:.0f}" y="{cy + 4}" font-size="11" {TEXT_FILL} opacity="0.8">{val}</text>\n'
+        svg += f'<text x="{label_x - 5}" y="{cy + 4:.0f}" text-anchor="end" font-size="12" {TEXT_FILL} opacity="0.8">{_esc(label)}</text>\n'
+        svg += f'<rect x="{label_x}" y="{y:.0f}" width="{w:.0f}" height="{bar_height}" rx="3" fill="{color}"/>\n'
+        svg += f'<text x="{label_x + w + 6:.0f}" y="{cy + 4:.0f}" font-size="11" {TEXT_FILL} opacity="0.8">{val}</text>\n'
 
     svg += _svg_source(source)
     svg += _svg_close()
@@ -125,8 +130,12 @@ def _lollipop(title: str, data: dict, **kwargs) -> str:
 
     max_val = max(values) if values else 1
     chart_top = 60 if subtitle else 50
-    area_height = 300
-    spacing = area_height / n
+    # Even, capped row spacing centered in the available band — a fixed area
+    # divided by n flung few rows to the far top/bottom (see _horizontal_bar).
+    area_bottom = 350  # leave room for the source line at y=370
+    available = area_bottom - chart_top
+    row_h = min(48, available / n)
+    block_top = chart_top + (available - row_h * n) / 2
     line_max = 350
     label_x = 140
 
@@ -134,7 +143,7 @@ def _lollipop(title: str, data: dict, **kwargs) -> str:
     svg += _svg_title_block(title, subtitle)
 
     for i, (label, val) in enumerate(zip(labels, values)):
-        cy = chart_top + i * spacing + spacing / 2
+        cy = block_top + i * row_h + row_h / 2
         w = (val / max_val) * line_max if max_val else 0
         color = _get_color(i, label, highlight)
 
