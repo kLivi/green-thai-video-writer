@@ -341,3 +341,25 @@ Video: yp3JZHXqgl0 (Thailand Quality Hub — Energy Storage deep dive, Thai-lang
 - Not ported: claude-blog fixes 1/2 (strip `[UNIQUE INSIGHT]`/`[ORIGINAL DATA]`) — this writer does not emit info-gain markers.
 
 **Result**: scheduled runner already passed `--verify`; default-on now also covers ad-hoc/direct invocations. Syntax-checked, committed, pushed.
+
+## 2026-07-11 — Stale-republish duplicate bug: root cause + fix (session ran from claude-blog)
+
+Task: "Green Power for Data Centers" published 3× (1052 Jun 21 legit, 1199
+Jun 28, 1249 Jul 6 — 98% identical). Root cause from run logs: queue head was
+a 2017 seminar video with NO subtitles → agent blocked asking an option
+question nobody answers headless → wrote nothing → runner fallback ("Manifest
+missing — falling back to newest HTML") republished LAST WEEK's output HTML.
+--verify passed (integrity, not novelty). Repeated every Sunday.
+
+Fixes:
+- ~/scripts/get-video-auto.sh: RUN_START_MARKER freshness gate — manifest and
+  fallback HTML must postdate run start, else "refusing stale republish" +
+  loud failure. (NOT git-tracked — this file only lives on disk.)
+- queue/video-queue.txt: seminar entry marked SKIP (committed). Next head:
+  CBRE green-building video.
+- Content: 1199 + 1249 trashed, inbound links in posts 327/434 fixed, 301s
+  live (see green-energy-thailand-blog progress.txt).
+
+Next steps: check Sun Jul 12 run log — must process CBRE video or fail loudly,
+never republish. Parking lot: port claude-blog's auto-trash-on-verify-fail
+(2d40ac6) here + idea-writer.
