@@ -38,7 +38,7 @@ DONE: VETTED: https://www.youtube.com/watch?v=yp3JZHXqgl0
 # Full episode deep dive on energy storage systems (Thai-language)
 DONE: https://www.youtube.com/watch?v=3DNCKvQacIo
 # Thailand's green power revolution for data centers
-VETTED-RESEARCH: https://www.youtube.com/watch?v=p5oZoBfWPqg
+SKIP: https://www.youtube.com/watch?v=p5oZoBfWPqg  # no subtitles, 2017 seminar — blocked headless runs 6/28+7/5
 # Seminar: Thailand readiness for energy storage systems
 
 # --- Green Buildings ---
