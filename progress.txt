@@ -363,3 +363,30 @@ Fixes:
 Next steps: check Sun Jul 12 run log — must process CBRE video or fail loudly,
 never republish. Parking lot: port claude-blog's auto-trash-on-verify-fail
 (2d40ac6) here + idea-writer.
+
+---
+
+## 2026-07-25 — Deterministic chart rendering ported in; pipe-delimited marker format retired
+
+**Task**: Port the deterministic chart path built in green-thai-idea-writer (post 1590 shipped a blank chart from a hand-transcribed SVG) into this pipeline.
+
+**What was done**:
+- Added `scripts/render_charts.py` + `scripts/chart_inspect.py` (identical to the idea-writer originals). Marker→SVG substitution happens in code; each chart is rasterized to confirm it draws; a bad chart exits non-zero and blocks the publish.
+- `scripts/build_chart.py` synced — this copy had drifted and was missing `_fit_end_x` (the value-label clip fix claude-blog got 2026-07-18). All three repos now byte-identical.
+- `scripts/verify_publish.py`: chart check was presence-only (`soup.find("svg")`); now parses and renders.
+- `scripts/wordpress_upload.py`: renders markers in `parse_article()` as a safety net so no upload path reaches WP with a raw marker or an unrenderable chart.
+- `~/scripts/get-video-auto.sh`: renders charts before the publish step, Discord ❌ + exit on failure. (Still not git-tracked.)
+- **Marker format changed.** This pipeline used a pipe-delimited form (`[CHART: type|title|json|source=…]`) that the shared renderer cannot parse — it would have hard-failed every publish. SKILL.md Step 5b and `prompts/chart-rules.md` now specify the same JSON marker as the other two pipelines, and instruct the agent to emit the marker and stop. Skill reinstalled.
+
+**Files changed**:
+- scripts/render_charts.py (new), scripts/chart_inspect.py (new)
+- scripts/build_chart.py, scripts/verify_publish.py, scripts/wordpress_upload.py
+- SKILL.md (Step 5b rewritten, pipe format removed), prompts/chart-rules.md (rewritten marker-only)
+- ~/scripts/get-video-auto.sh (untracked, on disk only)
+
+**Result**:
+- Charts can no longer be hand-authored into an article without the gate seeing them.
+- Resolved the outstanding watch item: the Jul 12 run processed the CBRE video correctly (post 1526, verify PASSED) — the 2026-07-11 stale-republish fix is validated at the real surface. No republish occurred.
+- ⚠️ The Jul 19 run FAILED verification: post 1554 (Banpu energy transition). fal.ai cover generation returned an auth error on the `fal-ai/bytedance` endpoint, so the featured image fell back to an inline frame (`banpu-energy-transition-ceo.webp`) and the `-featured` cover check failed. Draft 1554 is still sitting in WP unresolved.
+
+**Next steps**: Fix the fal.ai cover auth failure behind post 1554's failed Jul 19 run, then resolve the orphan draft (regenerate the cover and set it, or trash the draft and let the video requeue).

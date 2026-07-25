@@ -114,7 +114,7 @@ def _horizontal_bar(title: str, data: dict, **kwargs) -> str:
     top = 78 if unit else 66
     row_h = 50
     bar_h = 20
-    axis_x, end_x = 32, 512
+    axis_x, end_x = 32, _fit_end_x(values, 512, 8)
     height = top + row_h * n + 44
 
     body = []
@@ -143,7 +143,7 @@ def _lollipop(title: str, data: dict, **kwargs) -> str:
 
     top = 78 if unit else 66
     row_h = 50
-    axis_x, end_x = 32, 500
+    axis_x, end_x = 32, _fit_end_x(values, 500, 14)
     height = top + row_h * n + 44
 
     body = []
@@ -190,8 +190,29 @@ def _donut(title: str, data: dict, **kwargs) -> str:
                     f'fill="{col}" stroke="{PANEL}" stroke-width="2"/>')
         ang = end
     if center:
-        body.append(f'<text x="{cx}" y="{cy+7:.0f}" text-anchor="middle" font-size="24" '
-                    f'font-weight="700" font-family="{SERIF}" fill="{INK}">{_esc(center)}</text>')
+        # The center sits inside the ring hole (inner diameter = 2*iR). A wide
+        # label at a fixed size spills across the ring, so fit it: split on the
+        # first space into a big value line + small unit line ("27.76M tons/yr"
+        # -> "27.76M" over "tons/yr"), and size each to the usable hole width.
+        hole = 2 * iR - 12  # usable width inside the ring, px
+
+        def _fit(text: str, cap: int) -> int:
+            # ~0.6 * font-size per char for this bold serif; clamp to [11, cap]
+            return max(11, min(cap, int(hole / (max(len(text), 1) * 0.6))))
+
+        parts = center.split(" ", 1)
+        if len(parts) == 2 and len(center) > 7:
+            big, small = parts
+            body.append(f'<text x="{cx}" y="{cy:.0f}" text-anchor="middle" '
+                        f'font-size="{_fit(big, 24)}" font-weight="700" '
+                        f'font-family="{SERIF}" fill="{INK}">{_esc(big)}</text>')
+            body.append(f'<text x="{cx}" y="{cy+17:.0f}" text-anchor="middle" '
+                        f'font-size="{_fit(small, 13)}" font-family="{SANS}" '
+                        f'fill="{INK}" opacity="0.7">{_esc(small)}</text>')
+        else:
+            body.append(f'<text x="{cx}" y="{cy+7:.0f}" text-anchor="middle" '
+                        f'font-size="{_fit(center, 24)}" font-weight="700" '
+                        f'font-family="{SERIF}" fill="{INK}">{_esc(center)}</text>')
     lx, ly = 300, top + 40
     for i, (lab, val) in enumerate(zip(labels, values)):
         yy = ly + i * 26
@@ -292,10 +313,30 @@ def _grouped_bar(title: str, data: dict, **kwargs) -> str:
 
 
 def _fmt(v) -> str:
-    """Render a number cleanly: drop the .0 on integers, keep real decimals."""
+    """Render a number cleanly: drop the .0 on integers, group thousands, keep decimals.
+
+    Grouping matters editorially — a bare '780000' reads as noise next to a bar.
+    _fit_end_x measures the grouped string, so the comma is accounted for in
+    the width reserved for the label.
+    """
     if isinstance(v, float) and v.is_integer():
-        return str(int(v))
+        v = int(v)
+    if isinstance(v, (int, float)):
+        return f"{v:,}"
     return str(v)
+
+
+def _fit_end_x(values, base_end_x: float, gap: float,
+               char_w: float = 7.6, right_pad: float = 24) -> float:
+    """Pull a bar's right edge in so the widest trailing value label stays inside W.
+
+    Value labels sit at bar_end + gap; a max-length bar would otherwise push a
+    wide label (e.g. '250,000') past the 560-wide card and clip it.
+    """
+    if not values:
+        return base_end_x
+    max_lbl = max(len(_fmt(v)) for v in values) * char_w
+    return min(base_end_x, W - right_pad - gap - max_lbl)
 
 
 # ---------------------------------------------------------------------------

@@ -1,161 +1,100 @@
 # Chart Generation Rules — Inline SVG Data Visualization
 
-Generate dark-mode-compatible inline SVG charts when article data supports it.
+## The one rule
 
-## When to Create Charts
+**Emit a `[CHART: {...}]` marker. Never write SVG. Never run `build_chart.py`
+yourself. Never paste its output.**
 
-Place a `[CHART]` marker when research data has:
-- 3+ comparable metrics (e.g., cost per kWh across battery types)
-- Trend data over time (e.g., solar capacity growth 2020-2026)
-- Before/after comparisons (e.g., pre- vs post-subsidy costs)
-- Parts of a whole (e.g., Thailand's energy mix breakdown)
+A deterministic step (`scripts/render_charts.py`) replaces every marker with a
+built chart and rasterizes the result to confirm it actually draws. It runs in
+the pipeline before upload, and again as a safety net inside
+`wordpress_upload.py`. A chart that fails to build or renders wrong **stops the
+publish** — nothing reaches WordPress.
 
-Target 1-2 charts per article. Not every article needs one — skip charts if
-the data doesn't warrant visualization.
+This division exists because the transcription step used to be yours, and it
+kept going wrong in ways that were invisible until the article was live:
 
-## Chart Type Selection
+- **2026-06-30** — a `\[CHART:.*?\]` regex stopped at the first `]` inside
+  `"labels":[...]` and left truncated JSON in the post.
+- **2026-07-25 (post 1590)** — a hand-copied `<text>` element was closed with
+  `</title>`. One token. The chart published as an empty cream box.
 
-Select based on the data pattern. Never repeat a chart type within one post.
+Choosing the data and the chart type is judgment, and it is yours. Turning that
+choice into markup is mechanical, and it is not.
 
-| Data Pattern | Best Chart Type |
-|-------------|-----------------|
-| Before/after comparison | Grouped bar chart |
-| Ranked factors / correlations | Lollipop chart |
-| Parts of whole / market share | Donut chart |
-| Trend over time | Line chart |
-| Percentage improvement | Horizontal bar chart |
-| Distribution / range | Area chart |
-| Multi-dimensional scoring | Radar chart |
+## When to create a chart
 
-## Styling Rules (Non-Negotiable)
+Place a marker when the research supports it:
 
-All charts must work on both dark and light backgrounds:
+- 3+ comparable metrics (e.g. cost per kWh across battery types)
+- Trend data over time (e.g. solar capacity growth 2020-2026)
+- Before/after comparisons (e.g. pre- vs post-subsidy costs)
+- Parts of a whole (e.g. Thailand's energy mix breakdown)
 
-```
-Text elements:     fill="currentColor"
-Grid lines:        stroke="currentColor" opacity="0.08"
-Axis lines:        stroke="currentColor" opacity="0.3"
-Background:        transparent (no fill on root SVG)
-Subtitle text:     fill="currentColor" opacity="0.45"
-Source text:        fill="currentColor" opacity="0.35"
-Label text:        fill="currentColor" opacity="0.8"
-```
+Target 1-2 charts per article. Skip charts if the data doesn't warrant one — a
+chart of two numbers is worse than a sentence.
 
-### Color Palette
+## Chart type selection
 
-| Color | Hex | Use Case |
-|-------|-----|----------|
-| Orange | `#f97316` | Primary / highest value |
-| Sky Blue | `#38bdf8` | Secondary / comparison |
-| Purple | `#a78bfa` | Tertiary / special category |
-| Green | `#22c55e` | Quaternary / positive indicator |
+Never repeat a chart type within one post.
 
-For text inside colored elements: `fill="white"` with `font-weight="800"`.
+| Data pattern | Type |
+|---|---|
+| Ranked factors / correlations | `lollipop` |
+| Percentage improvement / single-metric comparison | `horizontal-bar` |
+| Parts of whole / market share | `donut` |
+| Trend over time | `line` |
+| Distribution / cumulative | `area` |
+| Before/after, A vs B | `grouped-bar` |
 
-## SVG Shell
+## Marker format
+
+One JSON object, inline in the HTML, where the chart should appear:
 
 ```html
-<figure>
-  <svg
-    viewBox="0 0 560 380"
-    style="max-width: 100%; height: auto; font-family: 'Inter', system-ui, sans-serif"
-    role="img"
-    aria-label="Chart description with key data point"
-  >
-    <title>Chart Title</title>
-    <desc>Description for screen readers with all key data points and source</desc>
-
-    <!-- Chart content -->
-
-    <text x="280" y="372" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.35">
-      Source: Source Name (Year)
-    </text>
-  </svg>
-</figure>
+[CHART: {"type":"horizontal-bar","title":"Battery Cost by Technology","data":{"labels":["Lithium-ion","Sodium-ion","Iron-air"],"values":[139,87,65]},"source":"BloombergNEF 2025"}]
 ```
 
-## Chart Type Construction
+**Fields**
 
-### Horizontal Bar Chart
+| Field | Required | Notes |
+|---|---|---|
+| `type` | yes | one of the six types above |
+| `title` | yes | shown at the top of the card |
+| `data` | yes | see below |
+| `source` | strongly preferred | rendered as "Source: …" in the footer |
+| `unit` | no | short domain label in the amber eyebrow (`"MW"`, `"US$ / MWh"`) |
 
-Best for: percentage improvements, single-metric comparisons.
+**Data shapes**
 
-1. Define chart area: x=80, y=40, width=440, height=280
-2. Calculate bar height: `chartHeight / dataCount - gap` (gap=8)
-3. Calculate bar width: `(value / maxValue) * chartWidth`
-4. Position bars: `y = chartY + index * (barHeight + gap)`
-5. Label on left (right-aligned at x=75): category name
-6. Value label at end of bar: percentage or number
-7. Source text at bottom center
+- Most types: `{"labels": [...], "values": [...]}`
+- `grouped-bar`: `{"labels": [...], "series": [{"name": "A", "values": [...]}]}`
+- `data.highlight` — a label to pick out in amber
+- `data.center_text` — center label for `donut` (e.g. `"27.76M tons/yr"`)
 
-### Grouped Bar Chart
+Raw numbers only — write `105000`, not `"105,000"` or `"105k"`. The renderer
+formats and groups them, and it sizes the bars around the formatted width.
 
-Best for: before/after, A vs B comparisons.
+## What the renderer guarantees
 
-1. Define groups along Y axis, bars within each group
-2. Use 2 colors (primary + secondary) for the two series
-3. Add legend at top: colored square + label for each series
-4. Gap between groups > gap within groups
+You don't control any of this, and shouldn't try to:
 
-### Donut Chart
+- **Editorial data-exhibit card** — cream panel (`#f3f0e8`) with a hairline
+  border, so the figure reads as an exhibit set apart from body text.
+- **One hue for magnitude** — forest green (`#2d5016`), amber (`#c67b33`) for a
+  highlighted item and line/area endpoints. Magnitude charts are not rainbows.
+- **Baked charcoal ink** — the site is light-only, and a baked light panel needs
+  guaranteed-dark text. (This is deliberate: no `currentColor`, no dark-theme flip.)
+- **Lora / IBM Plex Sans / Source Serif** — already loaded on the frontend.
+- **Single-line output** — WordPress' `wpautop` injects `<p>` tags at newlines
+  inside inline SVG and shatters the graphic. The renderer emits no newlines.
+- **Labels that fit** — bar and lollipop value labels reserve their own width,
+  so a long number can't be clipped at the card edge.
+- **Accessible markup** — `role="img"`, `aria-label`, and `<title>`.
 
-Best for: parts of whole, market share.
+## If a chart fails
 
-1. Center: cx=280, cy=180, outer radius=140, inner radius=80
-2. Calculate arc segments using cumulative angles
-3. Each segment: `<path d="M... A... L... A... Z" fill="color" />`
-4. Center text: total or key label
-5. Legend below chart with color squares + labels + values
-
-### Line Chart
-
-Best for: trends over time.
-
-1. X axis: time periods, evenly spaced
-2. Y axis: value range with 4-5 grid lines
-3. Draw grid lines: `stroke="currentColor" opacity="0.08"`
-4. Plot data points: `<circle cx=... cy=... r="4" fill="color" />`
-5. Connect with: `<polyline points="..." fill="none" stroke="color" stroke-width="2" />`
-6. Optional: area fill below line with `opacity="0.1"`
-
-### Lollipop Chart
-
-Best for: ranked factors, correlations.
-
-1. Horizontal orientation (like bar chart but with circles)
-2. Thin line from axis to data point: `stroke="currentColor" opacity="0.15" stroke-width="1"`
-3. Circle at data point: `r="6"` with fill color
-4. Value label next to circle
-5. Categories on Y axis (left-aligned)
-
-### Area Chart
-
-Best for: distribution, cumulative data.
-
-1. Same as line chart but with filled area below
-2. Area fill: `<path d="M... L... L... Z" fill="color" opacity="0.15" />`
-3. Line on top: `stroke="color" stroke-width="2" fill="none"`
-4. Grid lines behind the area
-
-### Radar Chart
-
-Best for: multi-dimensional scoring (5-7 axes).
-
-1. Center: cx=280, cy=190
-2. Draw concentric polygons for grid (3-4 levels)
-3. Calculate axis endpoints at equal angles
-4. Plot data points on each axis proportional to value
-5. Connect data points with filled polygon: `fill="color" opacity="0.2" stroke="color"`
-6. Label each axis at the outer edge
-
-## Quality Checklist
-
-- [ ] No hardcoded text colors (all use `currentColor`)
-- [ ] No white/light backgrounds (transparent or none)
-- [ ] Source attribution text present at bottom
-- [ ] `role="img"` and `aria-label` present on `<svg>`
-- [ ] `<title>` and `<desc>` present inside `<svg>`
-- [ ] Chart type not already used in this post
-- [ ] Data values match the source data exactly
-- [ ] Color palette uses only approved colors
-- [ ] ViewBox is `0 0 560 380`
+The renderer exits non-zero with the offending marker's title and reason, and
+the article is not published. Fix the marker — bad chart type, empty `values`,
+malformed JSON, a category label so long it overruns the card — and re-run.
+Do not work around it by pasting SVG.

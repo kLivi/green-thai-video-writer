@@ -31,6 +31,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Reuse the vetted helpers from the main uploader (same pattern as fix_images.py).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from wordpress_upload import get_wp_config, WordPressClient, _notify_failure  # noqa: E402
+from chart_inspect import find_svgs, inspect_html, renderer_available  # noqa: E402
 
 MIN_WORDS = 600
 MAX_WORDS = 4000
@@ -80,6 +81,32 @@ def _url_is_image(session, url: str) -> tuple[bool, str]:
         return True, ""
     except Exception as e:  # noqa: BLE001
         return False, f"{type(e).__name__}"
+
+
+def check_charts(content: str) -> list[Check]:
+    """Assert every inline chart parses, renders, and stays inside its frame.
+
+    The "chart present" check only asks whether an <svg> exists. Post 1590
+    satisfied that and still published an empty box. This renders the chart
+    and looks at it.
+    """
+    if not find_svgs(content):
+        return []
+
+    if not renderer_available():
+        return [Check(
+            "charts render correctly",
+            ok=False,
+            detail="cairosvg/Pillow not installed \u2014 chart rendering NOT verified",
+            severity="warn",
+        )]
+
+    problems = inspect_html(content)
+    return [Check(
+        "charts render correctly",
+        ok=not problems,
+        detail="" if not problems else "; ".join(problems[:3]),
+    )]
 
 
 def run_checks(client: WordPressClient, post: dict, require_chart: bool) -> list[Check]:
@@ -160,6 +187,10 @@ def run_checks(client: WordPressClient, post: dict, require_chart: bool) -> list
     has_chart = bool(soup.find("svg")) or "data-chart" in content
     results.append(Check("chart present", ok=has_chart, detail="" if has_chart else "no <svg>/chart markup",
                          severity="fail" if require_chart else "warn"))
+
+    # Charts actually render. Presence is not correctness — post 1590 passed
+    # the presence check with a chart that rendered as an empty box.
+    results.extend(check_charts(content))
 
     return results
 

@@ -179,7 +179,9 @@ Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
 - `[FRAME: MM:SS, description]` — for video frame extraction. Default for inline images when a visual moment from Step 3 matches the section being written. The timestamp must match one of the identified visual moments.
 
 Place 3-5 image markers total (1 cover `[IMAGE]` + 2-4 inline, preferring `[FRAME]` when available).
-**Chart markers:** Place `[CHART: ...]` markers where data supports visualization (0-2 per article).
+**Chart markers:** Place `[CHART: {...}]` JSON markers where data supports visualization
+(0-2 per article). Format and chart-type selection: `prompts/chart-rules.md`. Emit the
+marker only — never write or paste SVG.
 
 Output the full article HTML:
 ```bash
@@ -208,35 +210,25 @@ Wrap in a full HTML document (required by wordpress_upload.py):
 </html>
 ```
 
-### Step 5b — Generate charts
+### Step 5b — Charts: leave the markers alone
 
-For each `[CHART: ...]` marker, generate an inline SVG chart using `scripts/build_chart.py`.
+**Do nothing in this step.** Leave every `[CHART: {...}]` marker exactly as you
+wrote it in Step 5.
 
-The `[CHART]` marker format is:
+Do NOT run `build_chart.py`. Do NOT parse the marker JSON. Do NOT paste SVG into
+the article. `scripts/render_charts.py` does the substitution deterministically
+before upload, and rasterizes each chart to confirm it draws. A chart that fails
+to build or renders wrong stops the publish.
+
+This step used to be the agent's and it kept corrupting charts — most recently a
+`</text>` hand-copied as `</title>`, which shipped idea-writer post 1590 as an
+empty box. Marker format and chart-type selection: `prompts/chart-rules.md`.
+
+To check your markers before the pipeline does:
+
+```bash
+python3 scripts/render_charts.py output/<slug>.html --check
 ```
-[CHART: {chart_type}|{title}|{data_json}|source={source}|subtitle={optional_subtitle}|highlight={optional_label}]
-```
-
-Example:
-```
-[CHART: horizontal-bar|Solar Costs by Year|{"labels":["2020","2021","2022"],"values":[120000,110000,95000]}|source=MEG Study 2023]
-```
-
-For each `[CHART]` marker:
-1. Parse the marker to extract: chart_type, title, data (JSON), source, subtitle, highlight
-2. Run `python scripts/build_chart.py` with:
-   - `--type {chart_type}`
-   - `--title "{title}"`
-   - `--data '{data_json}'`
-   - `--source "{source}"` (if provided)
-   - `--subtitle "{subtitle}"` (if provided)
-   - `--highlight "{label}"` (if provided)
-3. Capture the `<figure><svg>...</svg></figure>` output
-4. Replace the `[CHART]` marker in the HTML with the generated SVG block
-
-If no `[CHART]` markers exist, skip this step.
-
-Note: The `build_chart.py` script enforces consistent styling (currentColor, transparent background, accessibility). Do not modify the generated SVG.
 
 ### Step 6a — Extract video frames
 
@@ -454,7 +446,7 @@ sed -i "s|^${LINE}$|SKIP: ${LINE#*: }|" queue/video-queue.txt
 - [ ] FAQ section at end
 - [ ] Word count 1500-2500
 - [ ] Thai context adds genuine value (not padding)
-- [ ] Charts generated via build_chart.py (not hand-coded SVG)
+- [ ] Charts left as `[CHART: {...}]` markers (never hand-coded SVG, never pre-substituted)
 - [ ] 3-5 images (1 cover + 2-4 inline), all WebP
 - [ ] Cover named `{slug}-featured.webp`
 - [ ] Alt text on every image

@@ -30,6 +30,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from render_charts import render_markers, ChartMarkerError  # noqa: E402
+
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -170,6 +173,26 @@ def make_auth_header(username: str, app_password: str) -> dict:
 def parse_article(html_path: Path) -> dict:
     """Extract metadata and content from a generated HTML article."""
     html = html_path.read_text(encoding="utf-8")
+
+    # Safety net: charts are normally rendered into the file by render_charts.py
+    # before we get here, so this is usually a no-op. It exists so that no upload
+    # path — headless, manual, or a re-run — can reach WordPress with a raw
+    # [CHART: {...}] marker in the body, and so an unrenderable chart stops the
+    # publish rather than shipping as an empty box. We do not write the file back;
+    # render_charts.py owns the file, this owns what leaves for WordPress.
+    try:
+        html, chart_count = render_markers(html)
+    except ChartMarkerError as exc:
+        print(f"\nFATAL: chart render failed — {exc}", file=sys.stderr)
+        _notify_failure(
+            stage="chart render",
+            title=f"Upload aborted: bad chart in {html_path.name}",
+            detail=str(exc),
+        )
+        sys.exit(1)
+    if chart_count:
+        print(f"  Rendered {chart_count} chart marker(s) at upload time")
+
     soup = BeautifulSoup(html, "html.parser")
 
     meta = {}
