@@ -44,7 +44,7 @@ SKIP: https://www.youtube.com/watch?v=p5oZoBfWPqg  # no subtitles, 2017 seminar 
 # --- Green Buildings ---
 DONE: https://www.youtube.com/watch?v=o51nxN1I-ds
 # CBRE Thailand podcast — green building case study, ROI, efficiency
-VETTED: https://www.youtube.com/watch?v=f7jSeEEuGqc
+SKIP: https://www.youtube.com/watch?v=f7jSeEEuGqc
 # Thai Green Building Institute director on market trends and adoption
 
 # --- Corporate Transition ---
