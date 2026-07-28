@@ -295,6 +295,21 @@ def _derive_focus_keyword(title: str) -> str:
     return " ".join(words[:4]).strip()
 
 
+# Arrow separating anchor text from target description inside an
+# [INTERNAL-LINK: ...] marker, in every form the writer emits it.
+_INTERNAL_LINK_ARROW = re.compile(r"→|-&gt;|->|&rarr;|&#8594;")
+
+
+def _internal_link_anchor(payload: str) -> str:
+    """Return the anchor-text half of an [INTERNAL-LINK: ...] payload.
+
+    "guide to biogas → sizing article"  ->  "guide to biogas"
+    "solar permit guide"                ->  "solar permit guide"  (no arrow)
+    """
+    anchor = _INTERNAL_LINK_ARROW.split(payload, maxsplit=1)[0]
+    return anchor.strip().rstrip(",;:")
+
+
 def clean_content(html: str, cover_src: str) -> str:
     """Clean article content before WordPress upload.
 
@@ -350,10 +365,23 @@ def clean_content(html: str, cover_src: str) -> str:
 
     content = str(soup)
 
-    # Strip [INTERNAL-LINK: anchor text → target description] markers
-    # They may appear bare or wrapped in <p> tags
+    # [INTERNAL-LINK: anchor text → target description]
+    #
+    # A marker alone in its own <p> is an authoring DIRECTIVE — drop it whole.
     content = re.sub(r"<p>\s*\[INTERNAL-LINK:[^\]]*\]\s*</p>\s*", "", content)
-    content = re.sub(r"\[INTERNAL-LINK:[^\]]*\]", "", content)
+
+    # An INLINE marker is different: the writer skill places it as the
+    # grammatical OBJECT of the sentence ("see our [INTERNAL-LINK: guide to
+    # X → ...]."), so deleting the whole token leaves a stub — "see our ." —
+    # which reads as broken prose and passes the publish gate, since the marker
+    # itself is gone. Keep the anchor half, drop the "→ target" annotation: the
+    # sentence stays intact AND the surviving phrase is exactly what the
+    # internal-linking pipeline later wraps in a real <a>.
+    content = re.sub(
+        r"\[INTERNAL-LINK:([^\]]*)\]",
+        lambda m: _internal_link_anchor(m.group(1)),
+        content,
+    )
 
     return content
 
