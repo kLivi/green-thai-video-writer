@@ -529,7 +529,21 @@ def generate_schema_json_ld(
             ],
         })
 
-    return json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False, indent=2)
+    # Emitted on a SINGLE LINE, deliberately. WordPress runs wpautop when a post
+    # is saved from the block editor, and it converts every newline inside the
+    # embedded <script type="application/ld+json"> into "<br />\n" — which breaks
+    # the JSON outright. With indent=2 that destroyed the schema of 12 live posts
+    # whenever one was hand-edited; the damage is silent, since the page still
+    # renders fine and only Google notices.
+    #
+    # Single-line JSON has no newlines, so wpautop has nothing to convert.
+    # Verified 2026-07-29 on scratch post 1650. JSON whitespace is insignificant,
+    # so nothing about the schema's meaning changes. Do NOT reintroduce indent=.
+    return json.dumps(
+        {"@context": "https://schema.org", "@graph": graph},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
 
 
 def generate_slug(title: str) -> str:
@@ -1177,7 +1191,8 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
         print(f"  Generated {len(type_names)} types: {', '.join(type_names)}")
 
     # Embed schema as <script> tag at end of post content
-    schema_tag = f'<script type="application/ld+json">\n{schema_json}\n</script>'
+    # No newlines between the tags either — same wpautop reason as above.
+    schema_tag = f'<script type="application/ld+json">{schema_json}</script>'
     content = content + "\n" + schema_tag
     print("  Embedded in post HTML (search engines read directly from page)")
 
