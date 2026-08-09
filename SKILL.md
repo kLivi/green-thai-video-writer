@@ -158,6 +158,45 @@ Based on the article angle, run 2-4 targeted WebSearch queries to fill gaps:
 
 Focus on Thailand-specific, recent (2024-2026) sources.
 
+#### Step 4a — Write `output/sources.json` (REQUIRED)
+
+Every factual claim you will cite gets a record here, written as you research.
+The publish gate (`shared/verify_citations.py`) fetches each URL and checks the
+source really carries the number and the sentence.
+
+**This file is not optional.** An article with no citable statistics must still
+emit `{"sources": []}` — omitting it makes "nothing to cite" and "the writer
+forgot" indistinguishable, which is how post 1786 shipped a claim its cited
+page never made.
+
+**Delete any `output/sources.json` from a previous run first.** The output
+directory is reused, and a stale file verifies the previous article.
+
+Schema — every field required, per record:
+
+```json
+{"sources": [
+  {
+    "id": "S1",
+    "value": "3.8 million tonnes CO2e",
+    "claim": "Thai cement sector emissions cut since 2019",
+    "source_name": "Nation Thailand",
+    "url": "https://www.nationthailand.com/sustaination/40068611",
+    "quote": "the sector has cut more than 3.8 million tonnes of CO2e since 2019",
+    "tier": 2,
+    "source_type": "web"
+  }
+]}
+```
+
+- `quote` MUST be verbatim from that page and contain the number. No paraphrase;
+  no quote for a page you did not open.
+- `source_type`: `"web"`, or `"thai-facts"` for claims from
+  `claude-blog/shared/thai-facts.md` (then `url` may be empty).
+- `tier`: 1 = primary/official, 2 = established press/industry, 3 = other.
+- **A claim sourced only to the video is not a web citation.** Attribute it to
+  the video in prose; do not invent a URL record for it.
+
 ### Step 5 — Write article
 
 Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
@@ -438,6 +477,8 @@ sed -i "s|^${LINE}$|SKIP: ${LINE#*: }|" queue/video-queue.txt
 
 ## Quality Checklist (before publishing)
 
+- [ ] `output/sources.json` exists, is this run's (not a leftover), and covers every cited claim
+- [ ] Every `quote` is verbatim from the page at its `url` — a named source and a live hyperlink are NOT evidence the page supports the claim
 - [ ] No fabricated statistics
 - [ ] Video properly attributed (channel name, link)
 - [ ] YouTube embed present

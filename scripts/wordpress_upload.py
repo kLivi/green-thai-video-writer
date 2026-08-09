@@ -86,6 +86,14 @@ AUTHOR_NAME = "Green Energy Thailand"
 # Shared loader for all GET pipelines lives at ../../shared/env_loader.py
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "shared"))
 from env_loader import load_env  # noqa: E402
+from citation_gate import run_citation_gate  # noqa: E402
+
+# Whether a missing sources.json hard-fails the publish. Starts False: the gate
+# is wired before the SKILL is proven to emit the file, and flipping both at
+# once would kill a scheduled bi-weekly run on the first miss. Flip to True
+# after a real /get-video run produces a valid sources.json — see
+# claude-blog/spec-citation-gate-portability.md build order step 6.
+REQUIRE_SOURCES_JSON = False
 
 
 # Pipeline label used in Discord failure alerts
@@ -295,19 +303,37 @@ def _derive_focus_keyword(title: str) -> str:
     return " ".join(words[:4]).strip()
 
 
-# Arrow separating anchor text from target description inside an
-# [INTERNAL-LINK: ...] marker, in every form the writer emits it.
-_INTERNAL_LINK_ARROW = re.compile(r"→|-&gt;|->|&rarr;|&#8594;")
+# Any form of the retired [INTERNAL-LINK] marker. Not stripped — see
+# assert_no_internal_link_markers() below.
+INTERNAL_LINK_MARKER = re.compile(r"\[INTERNAL-LINK\b[^\]]*\]")
 
 
-def _internal_link_anchor(payload: str) -> str:
-    """Return the anchor-text half of an [INTERNAL-LINK: ...] payload.
+class InternalLinkMarkerError(RuntimeError):
+    """An article still carries retired [INTERNAL-LINK] markers."""
 
-    "guide to biogas → sizing article"  ->  "guide to biogas"
-    "solar permit guide"                ->  "solar permit guide"  (no arrow)
+
+def assert_no_internal_link_markers(content: str) -> None:
+    """Refuse to upload an article containing [INTERNAL-LINK] markers.
+
+    The marker mechanism was removed 2026-08-07 (see
+    claude-blog/plan-remove-internal-link-markers.md). Nothing ever consumed
+    it: get-internal-linking has no marker handling and derives anchors from
+    post title + body text instead. Both historical strip strategies published
+    broken prose — deleting the token truncated the host sentence ("see ."),
+    keeping the anchor half stranded an unlinked phrase mid-paragraph.
+
+    This pipeline never emitted markers; the strip code was inherited from
+    claude-blog. The check stays anyway, because a marker here would mean the
+    writer improvised one, and that article is defective at the source.
     """
-    anchor = _INTERNAL_LINK_ARROW.split(payload, maxsplit=1)[0]
-    return anchor.strip().rstrip(",;:")
+    found = INTERNAL_LINK_MARKER.findall(content)
+    if found:
+        raise InternalLinkMarkerError(
+            f"{len(found)} retired [INTERNAL-LINK] marker(s) in article — upload refused. "
+            "Internal links are created post-publish by get-internal-linking; the writer "
+            "must not mark, name, or point at own-domain pages. "
+            f"First: {found[0][:120]}"
+        )
 
 
 def clean_content(html: str, cover_src: str) -> str:
@@ -365,23 +391,9 @@ def clean_content(html: str, cover_src: str) -> str:
 
     content = str(soup)
 
-    # [INTERNAL-LINK: anchor text → target description]
-    #
-    # A marker alone in its own <p> is an authoring DIRECTIVE — drop it whole.
-    content = re.sub(r"<p>\s*\[INTERNAL-LINK:[^\]]*\]\s*</p>\s*", "", content)
-
-    # An INLINE marker is different: the writer skill places it as the
-    # grammatical OBJECT of the sentence ("see our [INTERNAL-LINK: guide to
-    # X → ...]."), so deleting the whole token leaves a stub — "see our ." —
-    # which reads as broken prose and passes the publish gate, since the marker
-    # itself is gone. Keep the anchor half, drop the "→ target" annotation: the
-    # sentence stays intact AND the surviving phrase is exactly what the
-    # internal-linking pipeline later wraps in a real <a>.
-    content = re.sub(
-        r"\[INTERNAL-LINK:([^\]]*)\]",
-        lambda m: _internal_link_anchor(m.group(1)),
-        content,
-    )
+    # [INTERNAL-LINK] markers are no longer stripped (2026-08-07). No strip
+    # strategy produced clean prose, so a marker is a hard upload refusal —
+    # see assert_no_internal_link_markers(), called pre-upload.
 
     return content
 
@@ -1196,6 +1208,12 @@ def upload_article(html_path: Path, images_dir: Path | None, dry_run: bool = Fal
     content = content + "\n" + schema_tag
     print("  Embedded in post HTML (search engines read directly from page)")
 
+    # Retired [INTERNAL-LINK] markers are a hard refusal, not something to
+    # launder. Checked after body + schema are assembled, so a marker hiding in
+    # an FAQ answer that reached the FAQPage JSON-LD is caught too. Pre-upload,
+    # so it fires before any API call.
+    assert_no_internal_link_markers(content)
+
     # 6c. Wrap SVG figures in Gutenberg Custom HTML block markers
     # This prevents the Gutenberg block editor from stripping inline SVGs
     # when the post is edited through wp-admin.
@@ -1386,10 +1404,29 @@ Environment (.env):
         _notify_failure("pre-flight", "HTML file not found", str(args.html_file))
         sys.exit(1)
 
+    # ── Pre-upload citation gate (always on, BEFORE any WordPress API call) ───────
+    # Shared with claude-blog and idea-writer via ../../shared/citation_gate.py.
+    # This pipeline previously had NO citation verification at all. Never put
+    # this behind a flag — see claude-blog/CLAUDE.md, "a publish gate must never
+    # be opt-in".
+    run_citation_gate(
+        args.html_file,
+        require_sources=REQUIRE_SOURCES_JSON,
+        notify=_notify_failure,
+    )
+
     try:
         post = upload_article(args.html_file, args.images, dry_run=args.dry_run, category=args.category)
     except SystemExit:
         raise
+    except InternalLinkMarkerError as e:
+        # Author error, not a crash — a traceback would read as a pipeline bug
+        # in the Discord alert. The article is defective at the source.
+        print(f"\n❌ UPLOAD REFUSED: {e}", file=sys.stderr)
+        print("   Fix: remove the marker(s). Internal links are added post-publish "
+              "by get-internal-linking — the writer must not create them.", file=sys.stderr)
+        _notify_failure("upload", "Upload refused — retired [INTERNAL-LINK] markers", str(e))
+        sys.exit(1)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()

@@ -1,3 +1,25 @@
+## 2026-08-07 — Retired the [INTERNAL-LINK] marker strip; markers now refuse upload
+
+**Task**: Apply the cross-pipeline half of claude-blog's marker-removal spec.
+
+**What was done**:
+- Removed `_internal_link_anchor()` and the `[INTERNAL-LINK]` strip from `clean_content()`.
+- Added `assert_no_internal_link_markers()` + `InternalLinkMarkerError`, called pre-upload on assembled content (after schema embed, so a marker inside an FAQ answer that reached the FAQPage JSON-LD is caught too).
+- Added a `main()` handler turning the refusal into a clean stderr message + Discord alert instead of a raw traceback.
+
+**Files changed**:
+- `scripts/wordpress_upload.py`
+
+**Result**:
+- This pipeline never emitted markers — the strip was inherited copy-paste from claude-blog. The check stays because a marker here would mean the writer improvised one, and that article is defective at the source.
+- Smoke-tested at function level (repo has no test suite): refuses a marker, passes a clean article containing a real `<a>`.
+- ⚠️ Not exercised by a live run. Rationale and full context: `claude-blog/plan-remove-internal-link-markers.md`.
+- Nothing committed — Keith said leave it.
+
+**Next steps**: Verify on the next scheduled run (`GreenThaiGetIdea`, bi-weekly Sat ~10 AM) that a normal article still publishes — the gate should be a no-op. Commit when the claude-blog side is committed.
+
+---
+
 ## 2026-05-27 — Manual article: Thailand EV boom (BBC podcast, GvPPsPT8GEQ)
 
 **Task**: Turn a BBC World Service EV podcast into a Thailand-only article, with home-solar EV charging as a minor angle.
@@ -390,3 +412,19 @@ never republish. Parking lot: port claude-blog's auto-trash-on-verify-fail
 - ⚠️ The Jul 19 run FAILED verification: post 1554 (Banpu energy transition). fal.ai cover generation returned an auth error on the `fal-ai/bytedance` endpoint, so the featured image fell back to an inline frame (`banpu-energy-transition-ceo.webp`) and the `-featured` cover check failed. Draft 1554 is still sitting in WP unresolved.
 
 **Next steps**: Fix the fal.ai cover auth failure behind post 1554's failed Jul 19 run, then resolve the orphan draft (regenerate the cover and set it, or trash the draft and let the video requeue).
+
+## 2026-08-09 — Citation gate wired in; SKILL now emits sources.json
+
+**Task**: This pipeline had no citation verification — same gap that let claude-blog's sibling pipeline publish an unsupported claim (post 1786).
+
+**What was done**:
+- Wired the shared citation gate into `scripts/wordpress_upload.py`, before any WordPress API call, always on. Gate body at `../../shared/citation_gate.py`, shared with claude-blog and idea-writer.
+- Added Step 4a to SKILL.md: write `output/sources.json` during supplementary research, full schema, verbatim-quote rule, delete-stale-file instruction, and a note that a claim sourced only to the video is not a web citation (attribute it in prose, don't invent a URL record).
+- Added two pre-publish checklist items covering sources.json freshness and verbatim quotes.
+- `REQUIRE_SOURCES_JSON = False` until a real run proves the SKILL emits the file.
+
+**Files changed**:
+- scripts/wordpress_upload.py (imports and calls run_citation_gate)
+- SKILL.md (Step 4a + checklist)
+
+**Next steps**: Run `/get-video` on a queued video and confirm `output/sources.json` is written and valid; then set `REQUIRE_SOURCES_JSON = True`.
