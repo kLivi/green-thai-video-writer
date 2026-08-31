@@ -1,0 +1,436 @@
+# Green Thai Video Writer — progress.txt (session history log)
+
+> Source: /home/unify/Documents/green-energy-thailand/green-thai-video-writer/progress.txt
+> Collected: 2026-09-01
+> Published: 2026-08-09 (last entry date; log spans 2026-03 through 2026-08-09)
+
+## 2026-08-07 — Retired the [INTERNAL-LINK] marker strip; markers now refuse upload
+
+**Task**: Apply the cross-pipeline half of claude-blog's marker-removal spec.
+
+**What was done**:
+- Removed `_internal_link_anchor()` and the `[INTERNAL-LINK]` strip from `clean_content()`.
+- Added `assert_no_internal_link_markers()` + `InternalLinkMarkerError`, called pre-upload on assembled content (after schema embed, so a marker inside an FAQ answer that reached the FAQPage JSON-LD is caught too).
+- Added a `main()` handler turning the refusal into a clean stderr message + Discord alert instead of a raw traceback.
+
+**Files changed**:
+- `scripts/wordpress_upload.py`
+
+**Result**:
+- This pipeline never emitted markers — the strip was inherited copy-paste from claude-blog. The check stays because a marker here would mean the writer improvised one, and that article is defective at the source.
+- Smoke-tested at function level (repo has no test suite): refuses a marker, passes a clean article containing a real `<a>`.
+- ⚠️ Not exercised by a live run. Rationale and full context: `claude-blog/plan-remove-internal-link-markers.md`.
+- Nothing committed — Keith said leave it.
+
+**Next steps**: Verify on the next scheduled run (`GreenThaiGetIdea`, bi-weekly Sat ~10 AM) that a normal article still publishes — the gate should be a no-op. Commit when the claude-blog side is committed.
+
+---
+
+## 2026-05-27 — Manual article: Thailand EV boom (BBC podcast, GvPPsPT8GEQ)
+
+**Task**: Turn a BBC World Service EV podcast into a Thailand-only article, with home-solar EV charging as a minor angle.
+
+**What was done**:
+- Processed manual URL (BBC "EV boom in Thailand and Vietnam", 25:55); needed `--remote-components ejs:github` to fetch manual EN subtitles past the yt-dlp n-challenge.
+- Skipped all Vietnam/Vinfast content per request; kept home-solar charging to one paragraph + one FAQ (framed as self-consumption since net-billing quota is frozen).
+- Reconciled video figures with verified sources (Nation Thailand: 120,301 BEVs 2025 +80%, ~19-21% share; Low-Carbon Power: fossil >2/3, gas >50%, coal ~15%). Used video's 1%→24% framing for the "24x" title at Keith's request.
+- 4 fal.ai images (cover + showroom + charging cable + rooftop solar), 2 build_chart.py charts (sales-share growth, grid mix).
+
+**Files changed**:
+- output/thailand-ev-boom-24x-growth.html (new)
+- output/images/thailand-ev-boom-24x-growth-{featured,showroom,charging-cable,rooftop-solar}.webp (new)
+
+**Result**:
+- WP draft Post 743 created (1,589 words, category Electric Vehicles & Clean Transport, schema + RankMath set, Discord fired). Awaiting human review/publish.
+- ⚠️ Upload slug generator stripped "ev" as a stopword → slug `thailand-boom-24x-growth` (dropped the EV). Bad for an EV blog; worth fixing the stopword list.
+
+**Next steps**: Review/publish WP draft 743 (fix slug to include "ev"); then verify the scheduled run Sun 2026-06-01 completes cleanly and re-enable `Watchdog-GetVideo`.
+
+---
+
+## 2026-05-25 — Restored headless automation on Kimi K2.6; fixed Post 720 cover
+
+**Task**: Bring get-video back to unattended runs on the cheaper Kimi backend and fix a misleading AI-generated cover.
+
+**What was done**:
+- Rewrote `~/scripts/get-video-auto.sh` from reminder-only to a real `/get-video queue` run on Kimi K2.6 (Moonshot endpoint; `unset ANTHROPIC_API_KEY`), with WP-upload success detection + Discord embed.
+- Validated end-to-end: produced WP draft Post 720 (RidgeBlade turbine, 2,234 words, 1 chart + video frames).
+- Replaced 720's cover — fal.ai invented generic propeller windmills for the real ducted product; swapped for a conceptual windy-Thai-rooftop scene with a composited "?" (set via WP REST `featured_media`; body untouched).
+- Committed `visual-media.md` guidance (incl. pre-existing energy-equipment blocks) so AI no longer attempts specific products.
+
+**Files changed**:
+- prompts/visual-media.md (product-cover + energy-equipment guidance)
+- ~/scripts/get-video-auto.sh (reminder → real Kimi run; live/untracked)
+- output/images/ridgeblade-home-wind-turbine-thailand-featured.webp (new conceptual cover)
+
+**Result**:
+- get-video runs headless on Kimi; next scheduled fire Sun 2026-06-01 produces a real article.
+- Post 720's cover no longer misrepresents the product.
+
+---
+
+## 2026-04-04 — Chart generation standardization
+
+**Task**: Align chart generation with claude-blog pipeline using build_chart.py script.
+
+**What was done**:
+- Copied `scripts/build_chart.py` from claude-blog to this pipeline
+- Updated SKILL.md Step 5b to use build_chart.py instead of hand-coded SVG
+- Defined new `[CHART: ...]` marker format with pipe-separated fields
+- Updated quality checklist to verify charts are generated via script
+
+**Files changed**:
+- scripts/build_chart.py (new — copied from claude-blog)
+- SKILL.md (Step 5b workflow, chart marker format, quality checklist)
+
+**Result**:
+- Charts now use deterministic Python script for consistent styling
+- Same visual output and accessibility features as claude-blog
+- LLM selects what to chart, script handles rendering
+
+---
+
+## 2026-03-27 — Discord notification bug fix + queue audit
+
+### Discord notification was silently broken
+- **Root cause**: `wordpress_upload.py` checked `os.environ.get("DISCORD_WEBHOOK_URL")` only — never read from `.env`. Since the env var isn't in the OS environment (only in `.env`), the notification was skipped on every run with no error.
+- **Fix**: Added `load_env()` call at the notification block so it reads `DISCORD_WEBHOOK_URL` from `.env` via the same pattern used for WordPress credentials. Two-line change.
+- **Result**: Discord draft notifications now actually fire. The code was already fully correct (rich embed, preview link, edit link, timestamp) — it just couldn't find the webhook URL.
+
+### Queue audit
+- Investigated why last scheduler run was 2026-03-22. Confirmed: bi-weekly schedule is correct (3/22 → 4/5). Not a problem.
+- `xT8FAET7OBA` (Solar Rooftop investment deep dive) was still marked `VETTED:` despite evidence it was already processed. Marked as `DONE:` manually to prevent duplicate processing on 4/5 run.
+- Queue has 14 VETTED items remaining across all categories.
+
+### Scripts folder reorganisation (C:\Users\livin\scripts\)
+- `get-video-auto.sh` and `get-video-scheduled.ps1` moved to `get-video/` subfolder
+- Task Scheduler task `GetVideo-GreenThailand` needs its action path updated (requires admin PowerShell — user must run manually):
+  ```powershell
+  Set-ScheduledTask -TaskName 'GetVideo-GreenThailand' -Action (New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\livin\scripts\get-video\get-video-scheduled.ps1"')
+  ```
+
+## 2026-03-25 — Discord notifications + video frame extraction
+
+### Discord draft notifications
+- Added Discord webhook notification to `scripts/wordpress_upload.py` in all 3 pipelines (video-writer, idea-writer, claude-blog)
+- Fires when a WordPress draft is created (not on updates or dry-run)
+- Rich embed with: article title linking to Cloudways preview URL (`/?p={id}&preview=true`), post ID, category, image count, focus keyword, edit link
+- Footer identifies which pipeline sent it (Video Pipeline / Idea Pipeline / Blog Pipeline)
+- `DISCORD_WEBHOOK_URL` added to shared `.env` (idea-writer/video-writer) and claude-blog's own `.env`
+- Non-blocking: failures just print a warning, don't stop the pipeline
+- Tested successfully — webhook delivered to Discord
+
+### Video frame extraction (design + implementation, not yet smoke-tested)
+- **Problem**: AI-generated images can be misleading when the video shows specific real-world things (actual installations, equipment, scenery). Video creators have already framed relevant shots.
+- **Solution**: Extract actual frames from the source YouTube video at timestamps identified from the transcript, fall back to fal.ai when no relevant frame exists.
+- **Design spec**: `docs/superpowers/specs/2026-03-25-video-frame-extraction-design.md`
+- **Implementation plan**: `docs/superpowers/plans/2026-03-25-video-frame-extraction.md`
+
+#### Key decisions
+- Cover image always fal.ai (1200×630 OG ratio). Video frames for inline only.
+- All video frames 650×366 — no cropping to portrait/square, respect creator's framing.
+- 5-second download window per timestamp (transcript timestamps are approximate).
+- 5 candidate frames extracted per moment, LLM views them and picks the best.
+- `<figcaption>` with linked attribution required on every video frame (fair use basis).
+- `[FRAME: MM:SS, description]` marker alongside existing `[IMAGE: description]` marker.
+
+#### Files modified
+- `prompts/extract-video-data.md` — added Visual Moments section (timestamp identification rules)
+- `SKILL.md` Step 2 — VTT file preservation note
+- `SKILL.md` Step 3 — reads VTT for timestamps, outputs visual moments list
+- `SKILL.md` Step 5 — two marker types (`[FRAME]` and `[IMAGE]`)
+- `SKILL.md` Step 6 — split into 6a (frame extraction via yt-dlp+ffmpeg) and 6b (fal.ai for cover + fallback)
+- `SKILL.md` Quality Checklist — frame attribution and dimension checks
+- `prompts/visual-media.md` — video frame section (dimensions, attribution format, fallback rules)
+- Installed skill copy synced to `~/.claude/skills/get-video/`
+
+#### Not yet done
+- End-to-end smoke test (`/get-video queue` with frame extraction)
+
+## 2026-03-16 — Codebase audit & dependency updates
+
+### Audit & fixes
+- `_html_decode()` → `html.unescape()`: Replaced manual 3-entity decoder with Python stdlib `html.unescape()`, which handles all HTML entities.
+- `Image.LANCZOS` → `Image.Resampling.LANCZOS`: Updated Pillow resize calls in `SKILL.md` and `prompts/visual-media.md` to use the modern enum form.
+- content-rules.md HTML Output section: Fixed contradiction with SKILL.md Step 5 and `wordpress_upload.py`. Now aligned with actual pipeline behavior.
+- Git repo initialized and pushed to GitHub (https://github.com/kLivi/green-thai-video-writer).
+
+### Audit findings not yet addressed
+- Step counter mismatch in `wordpress_upload.py`: Steps 1-5 say `/7` but steps 6-7 say `/8` (cosmetic).
+- Global SSL warning suppression: `urllib3.disable_warnings()` at module level suppresses warnings for all requests, not just the staging domain.
+- `frameborder="0"` on YouTube iframe in `prompts/video-article-template.md` is deprecated in HTML5 (use `style="border:none"`).
+- SPEC.md describes a TypeScript project structure that was never built.
+
+## 2026-03-16 — wordpress_upload.py fixes
+
+### Category mapping
+- `derive_category()` now returns `(pillar, subcategory)` matching actual WordPress taxonomy (queried from live site). Old mapping had wrong names (e.g. "Wind Energy" → corrected to "Wind Power").
+- `get_or_create_category()` → renamed to `find_category()`. Only looks up existing categories; warns if not found.
+- Subcategory support: Posts now get assigned both pillar and subcategory IDs.
+
+### RankMath
+- SEO meta fields removed from WP REST API `post.meta` (RankMath blocks it). Now set via RankMath's own `/wp-json/rankmath/v1/updateMeta` endpoint after post creation.
+
+### categories.json
+- Updated to match actual WordPress taxonomy names (e.g. "Installation, Permits & Grid Connection" not "Solar Installation & Permits").
+
+## 2026-03-16 — First article published
+
+- Video: "Thailand: Renewable Energy Revolution" (ADB Partnerships) → WP draft ID 434
+- Category: Policy, Economics & Thailand Context → National Energy Goals & Plans
+- 4 images, 2 SVG charts, ~2,100 words
+
+## 2026-03-16 — Internal linking integration (from get-internal-linking session)
+
+**Changes made (uncommitted):**
+- `scripts/wordpress_upload.py` — added internal linking hook (auto-triggers `run_new_post_mode` after upload), added article-type meta parsing
+- `SKILL.md` — added `<meta name="article-type" content="support">` to HTML template, added pillar phrase requirement (articles must mention pillar topic phrase for upward links)
+- `src/config/categories.json` — added `pillar_phrases` field to each pillar
+
+---
+## Session 2026-03-29: Off-Grid Solar in Thailand (g-E7aBGtDrk) — VETTED-RESEARCH
+
+**Completed:** Full pipeline execution from video to WordPress draft, frame extraction smoke test
+
+### What was done:
+1. Processed `VETTED-RESEARCH` video (TheContractorZone, 3:57)
+2. Extracted transcript using yt-dlp (English subtitles, ~570 words)
+3. Data extraction: 4 core components, no cost data, Thailand solar potential, battery emphasis
+4. Supplementary research (Brave Search):
+   - Thai off-grid system costs: 250-500K+ THB (batteries dominate budget)
+   - Regulations: <10kW exempt from licensing
+   - Battery costs: 110K THB for 5kW high-voltage system
+   - Solar irradiance: 17.4 MJ/m²/day annual average
+5. Article written (1,900+ words target achieved):
+   - TL;DR, video embed, 8 H2 sections + FAQ
+   - 2 inline images + 1 grouped bar chart
+   - Sources cited inline (Thai context, regulations, costs)
+   - Pillar phrase used: "solar energy" x3
+6. Images generated via fal.ai:
+   - Cover 1200×630 (off-grid-solar-thailand-featured.webp, 108K)
+   - Inline 650×366 (hillside, 53K)
+   - Inline 450×600 (batteries, 46K)
+7. Chart generated: SVG grouped bar chart (energy consumption vs battery capacity)
+8. Published to WordPress:
+   - Post ID: 505
+   - Slug: off-grid-solar-thailand
+   - Category: Solar Energy
+   - Featured image set, 2 images uploaded
+   - RankMath SEO + JSON-LD schema auto-generated
+   - Discord notification fired ✓
+
+### Quality notes:
+- Credibility: Medium (educational, no personal case study)
+- Visual moments limited (short 3:57 video, no on-site footage) — no FRAME extraction needed
+- Content fills gaps from video: cost breakdown, Thai regulations, battery reality check
+- Sentence rhythm checked, AI trigger words kept <5/1000
+- All external stats linked inline with sources
+
+### Queue status:
+- Marked g-E7aBGtDrk as DONE
+- Next unprocessed: 54n2HhXkRgM (VETTED-RESEARCH, BIPV building regulations)
+
+### Testing notes:
+- Frame extraction workflow confirmed unnecessary for this video (no visual moments suitable for extraction)
+- Next video (BIPV) should have better visual content from building sites
+- Discord notification working correctly (fired immediately after draft creation)
+
+
+## 2026-04-13 — Handoff cleanup
+
+Moved from handoff.md:
+
+**2026-04-04:** Standardized chart generation to use build_chart.py (copied from claude-blog).
+**2026-03-27:** Fixed Discord notification bug — `DISCORD_WEBHOOK_URL` only read from `os.environ`, not `.env`.
+**2026-03-25:** Added Discord draft notifications + video frame extraction.
+
+## Session – 2026-06-04 — CMS-subdomain host migration
+
+WordPress host migrated from the cloudwaysapps staging host to
+cms.greenenergythailand.com (valid auto-renewing cert) as part of the site-wide
+broken-images fix. host example updated to cms; verify guard already conditional; verify=False now applies only to the legacy
+cloudwaysapps host (conditional). Full record + root-cause analysis in
+green-energy-thailand-blog/progress.txt and
+green-energy-thailand-blog/docs/plans/2026-06-04-cms-subdomain-migration.md.
+
+Next steps: none — config change only; pipeline behaviour unchanged.
+
+---
+2026-06-07
+Task: /get-video queue — process next vetted video
+Video: Thailand Times: Thailand in the Race for EV Mass Adoption (Asian Development Bank)
+URL: https://www.youtube.com/watch?v=6k48VpAS_uM
+Results:
+- Article written and published as WordPress draft
+- Title: "Thailand's EV Mass Adoption: What ADB Experts Predicted in 2023 and What Actually Happened"
+- Slug: thailand-ev-mass-adoption
+- Post ID: 857
+- Category: Electric Vehicles & Clean Transport
+- Word count: ~2,100
+- Images: 4 (1 cover + 3 inline), all AI-generated via fal.ai Seedream v4.5
+- Charts: 1 donut chart (Thailand EV Charging Network Share 2025)
+- Credibility: Medium-High
+- Skipped previous queue entry (BYD CNA video) due to no transcript available
+Next steps:
+- Review draft in WordPress before publishing
+- Run internal linking pipeline after publish
+
+2026-06-14 — /get-video queue
+Video: yp3JZHXqgl0 (Thailand Quality Hub — Energy Storage deep dive, Thai-language, 9:04)
+- Thai auto-subtitles extracted (274 words)
+- Data extracted: EGAT Khao Kho wind farm 24 MW + 1 MW lithium battery, Thap Sakae solar+battery model
+- Research: Thailand BESS pipeline, EGAT 42 MW operational, PDP 2037 10 GW target, Royal Decree No. 805, BOI incentives
+- Article: Inside Thailand's First Grid-Scale Battery: How EGAT Uses 1 MW of Storage to Tame Wind Power at Khao Kho
+- Word count: ~1,900 words
+- Images: 3 AI-generated + 1 video frame
+- Chart: 1 donut chart (EGAT BESS portfolio)
+- WordPress draft: Post ID 901, category Energy Storage & Grid Infrastructure
+- Queue: marked DONE
+
+---
+
+## 2026-06-19 — Wire "Sustainable Building Materials" subcategory (cat 116)
+
+**Task**: Add the new Green Buildings subcategory so materials/techniques articles aren't published pillar-only (which orphaned get-internal-linking post 941).
+
+**What was done**:
+- Added `"Sustainable Building Materials": 116` to the Green Buildings block in `SILO_CATEGORY_IDS` (scripts/wordpress_upload.py).
+- Added 6 `_SUBCATEGORY_KEYWORDS` triggers (building material / concrete / cement / mass timber / hempcrete / bamboo construct) so a materials video self-classifies into 116.
+
+**Result**: `resolve_silo_categories(...,"Sustainable Building Materials") → [95,116]`. Change made by get-internal-linking session 24; commit pending (Keith).
+
+---
+
+## 2026-06-21 — /get-video queue
+
+**Task**: Process next vetted video (VETTED-RESEARCH: Thailand's green power revolution for data centers)
+
+**Video**: Thailand Breaking News — "Thailand's Green Power Revolution for Data Centers!" (1:01)
+**URL**: https://www.youtube.com/watch?v=3DNCKvQacIo
+
+**What was done**:
+- Extracted English auto-subtitles (143 words — very thin source)
+- VETTED-RESEARCH supplement: 3 WebSearch queries covering Thailand data center DPPA policy, hyperscaler investments, REC/UGT frameworks
+- Research synthesized into article: policy deep dive, investment table, regulatory status, Thai context (UGT2, I-RECs, EGAT), challenges
+- Flagged unsourced "80% green" claim from video as likely exaggerated; corrected with actual BOI/Direct PPA requirements
+- Article: "Green Power for Data Centers in Thailand: A 2,000 MW Pilot Attracting $23.5 Billion in Tech Investment"
+- Word count: ~1,850 words
+- Charts: 2 (horizontal bar: projected demand 2030/2037; donut: target energy mix 2037) via build_chart.py
+- Images: 4 AI-generated via fal.ai Seedream v4.5 (cover 1200×630, inline landscape 650×366, inline portrait 450×600, inline square 550×550)
+- Uploaded to WordPress: Post ID 1052, slug `green-power-data-centers`
+- Fixed featured image fallback (script missed cover-only comment → uploaded cover separately and set as featured_media)
+- Category: Policy, Economics & Thailand Context (pillar only; no subcategory keyword match in title)
+- RankMath + JSON-LD schema auto-generated; Discord notification sent ✓
+
+**Queue**: marked DONE
+
+**Next steps**: Review/publish WP draft 1052; run internal linking pipeline after publish.
+
+---
+
+## 2026-06-21 — Fix post 1052 broken images + stale dates; harden publish path
+
+**Task**: Repair published draft 1052 (all inline images broken, several project completion dates now past), then close the root-cause that produced it.
+
+**What was done**:
+- Diagnosed via the scheduled-run log + media timestamps: `wordpress_upload.py` filters uploads to filenames appearing as `<img>` tags, but the cover is referenced via `<!-- coverImage -->` comment only → cover dropped, featured fell back to an inline image → headless Kimi did manual recovery (`update_post.py`) that re-posted the body with relative `images/` src → broken inline images.
+- Fix #1: cover (`*-featured` / coverImage comment) now added to the upload set; cover detection matches the manifest filename (wordpress_upload.py).
+- Fix #2: new `scripts/verify_publish.py` post-publish gate (absolute img src, img 200s, featured-is-cover, schema, no leftover markers). Calibrated against live posts 941/1040/1052.
+- Fix #3: moved publish into the shell — agent writes article + `publish-manifest.json` and stops; `get-video-auto.sh` runs `wordpress_upload.py --verify` and consumes the queue only on verified success. Added `--verify` flag to wordpress_upload.py; updated get-video SKILL.md Step 7 + queue-consume contract.
+- Repaired 1052: re-uploaded 3 inline images (1057-59) + rewrote src; injected schema JSON-LD; verified all 9 gate checks pass.
+- Date corrections on 1052 (web-researched): Google Chonburi 2026→early 2027; AWS launched Jan 2025; UGT2 live Mar 2026 ~4.56 THB/kWh; TikTok detail notes ~$25B May 2026 expansion.
+- Deleted orphan media 1049-51 (verified unreferenced across 56 posts), deleted buggy `update_post.py`, removed `EOF` junk file.
+
+**Files changed**:
+- scripts/wordpress_upload.py (cover-detection fix; `--verify` flag + atomic verify gate)
+- scripts/verify_publish.py (new — post-publish verification gate)
+- scripts/fix_images.py, scripts/fix_schema_1052.py (new — one-off 1052 repairs)
+- ~/scripts/get-video-auto.sh (deterministic shell publish + verify gate; queue consumed post-verify) — NOTE: ~/scripts is not a git repo, unversioned
+- ~/.claude/skills/get-video/SKILL.md (Step 7 manifest+publish contract; queue mark-done deferred to shell)
+- scripts/update_post.py (deleted), EOF (deleted)
+
+**Result**:
+- Post 1052 draft now clean — images load, dates current, schema present, gate passes 9/9.
+- Publish path is now deterministic + self-verifying; a broken publish fails loud and does NOT consume the vetted queue entry.
+- ⚠️ Fix #3 full headless path (Kimi writes manifest + stops, shell publishes) NOT yet validated on a live run — only unit-tested (dry-run, bash -n, parse/queue-mark sims).
+- ⚠️ Pre-existing defect found (other pipeline): post 1040 has a malformed `<img>` — get-internal-linking injected `<a href>` into an alt attribute.
+- ⚠️ Kimi-leftover scripts `fix_cover.py`, `generate_images.py` still present (dead manual-publish path).
+
+**Next steps**: Validate Fix #3 with a live headless run (manual trigger of get-video-auto.sh or next scheduled run); confirm draft 1052 published + internal-linking run.
+
+---
+
+## 2026-07-07 — --verify default-on (publish-gate hardening, ported from claude-blog)
+
+**Task**: Close the same bare-invocation publish hole found + fixed in claude-blog (post 1243 shipped a broken image via a direct wordpress_upload.py call that skipped --verify).
+
+**What was done**:
+- `scripts/wordpress_upload.py`: `--verify` flipped from opt-in (`store_true`) to default-ON (`argparse.BooleanOptionalAction`, `--no-verify` to opt out). The post-publish `verify_publish.py` gate (relative/broken img src + leftover markers) can no longer be skipped by omitting the flag.
+- Not ported: claude-blog fixes 1/2 (strip `[UNIQUE INSIGHT]`/`[ORIGINAL DATA]`) — this writer does not emit info-gain markers.
+
+**Result**: scheduled runner already passed `--verify`; default-on now also covers ad-hoc/direct invocations. Syntax-checked, committed, pushed.
+
+## 2026-07-11 — Stale-republish duplicate bug: root cause + fix (session ran from claude-blog)
+
+Task: "Green Power for Data Centers" published 3× (1052 Jun 21 legit, 1199
+Jun 28, 1249 Jul 6 — 98% identical). Root cause from run logs: queue head was
+a 2017 seminar video with NO subtitles → agent blocked asking an option
+question nobody answers headless → wrote nothing → runner fallback ("Manifest
+missing — falling back to newest HTML") republished LAST WEEK's output HTML.
+--verify passed (integrity, not novelty). Repeated every Sunday.
+
+Fixes:
+- ~/scripts/get-video-auto.sh: RUN_START_MARKER freshness gate — manifest and
+  fallback HTML must postdate run start, else "refusing stale republish" +
+  loud failure. (NOT git-tracked — this file only lives on disk.)
+- queue/video-queue.txt: seminar entry marked SKIP (committed). Next head:
+  CBRE green-building video.
+- Content: 1199 + 1249 trashed, inbound links in posts 327/434 fixed, 301s
+  live (see green-energy-thailand-blog progress.txt).
+
+Next steps: check Sun Jul 12 run log — must process CBRE video or fail loudly,
+never republish. Parking lot: port claude-blog's auto-trash-on-verify-fail
+(2d40ac6) here + idea-writer.
+
+---
+
+## 2026-07-25 — Deterministic chart rendering ported in; pipe-delimited marker format retired
+
+**Task**: Port the deterministic chart path built in green-thai-idea-writer (post 1590 shipped a blank chart from a hand-transcribed SVG) into this pipeline.
+
+**What was done**:
+- Added `scripts/render_charts.py` + `scripts/chart_inspect.py` (identical to the idea-writer originals). Marker→SVG substitution happens in code; each chart is rasterized to confirm it draws; a bad chart exits non-zero and blocks the publish.
+- `scripts/build_chart.py` synced — this copy had drifted and was missing `_fit_end_x` (the value-label clip fix claude-blog got 2026-07-18). All three repos now byte-identical.
+- `scripts/verify_publish.py`: chart check was presence-only (`soup.find("svg")`); now parses and renders.
+- `scripts/wordpress_upload.py`: renders markers in `parse_article()` as a safety net so no upload path reaches WP with a raw marker or an unrenderable chart.
+- `~/scripts/get-video-auto.sh`: renders charts before the publish step, Discord ❌ + exit on failure. (Still not git-tracked.)
+- **Marker format changed.** This pipeline used a pipe-delimited form (`[CHART: type|title|json|source=…]`) that the shared renderer cannot parse — it would have hard-failed every publish. SKILL.md Step 5b and `prompts/chart-rules.md` now specify the same JSON marker as the other two pipelines, and instruct the agent to emit the marker and stop. Skill reinstalled.
+
+**Files changed**:
+- scripts/render_charts.py (new), scripts/chart_inspect.py (new)
+- scripts/build_chart.py, scripts/verify_publish.py, scripts/wordpress_upload.py
+- SKILL.md (Step 5b rewritten, pipe format removed), prompts/chart-rules.md (rewritten marker-only)
+- ~/scripts/get-video-auto.sh (untracked, on disk only)
+
+**Result**:
+- Charts can no longer be hand-authored into an article without the gate seeing them.
+- Resolved the outstanding watch item: the Jul 12 run processed the CBRE video correctly (post 1526, verify PASSED) — the 2026-07-11 stale-republish fix is validated at the real surface. No republish occurred.
+- ⚠️ The Jul 19 run FAILED verification: post 1554 (Banpu energy transition). fal.ai cover generation returned an auth error on the `fal-ai/bytedance` endpoint, so the featured image fell back to an inline frame (`banpu-energy-transition-ceo.webp`) and the `-featured` cover check failed. Draft 1554 is still sitting in WP unresolved.
+
+**Next steps**: Fix the fal.ai cover auth failure behind post 1554's failed Jul 19 run, then resolve the orphan draft (regenerate the cover and set it, or trash the draft and let the video requeue).
+
+## 2026-08-09 — Citation gate wired in; SKILL now emits sources.json
+
+**Task**: This pipeline had no citation verification — same gap that let claude-blog's sibling pipeline publish an unsupported claim (post 1786).
+
+**What was done**:
+- Wired the shared citation gate into `scripts/wordpress_upload.py`, before any WordPress API call, always on. Gate body at `../../shared/citation_gate.py`, shared with claude-blog and idea-writer.
+- Added Step 4a to SKILL.md: write `output/sources.json` during supplementary research, full schema, verbatim-quote rule, delete-stale-file instruction, and a note that a claim sourced only to the video is not a web citation (attribute it in prose, don't invent a URL record).
+- Added two pre-publish checklist items covering sources.json freshness and verbatim quotes.
+- `REQUIRE_SOURCES_JSON = False` until a real run proves the SKILL emits the file.
+
+**Files changed**:
+- scripts/wordpress_upload.py (imports and calls run_citation_gate)
+- SKILL.md (Step 4a + checklist)
+
+**Next steps**: Run `/get-video` on a queued video and confirm `output/sources.json` is written and valid; then set `REQUIRE_SOURCES_JSON = True`.

@@ -1,0 +1,89 @@
+# Green Thai Video Writer — categories.json (content taxonomy)
+
+> Source: /home/unify/Documents/green-energy-thailand/green-thai-video-writer/src/config/categories.json
+> Collected: 2026-09-01
+> Published: 2026-03-16
+
+```json
+{
+  "pillars": [
+    {
+      "name": "Solar Energy",
+      "pillar_phrases": ["solar energy", "solar power"],
+      "subcategories": [
+        "Solar Costs & Financing",
+        "Installation, Permits & Grid Connection",
+        "Climate, Performance & Maintenance",
+        "Utility-Scale Solar & Innovation"
+      ]
+    },
+    {
+      "name": "Wind Power",
+      "pillar_phrases": ["wind energy", "wind power"],
+      "subcategories": [
+        "Onshore Wind Farms",
+        "Offshore Wind & Future Development",
+        "When Wind Works (and When It Doesn't)"
+      ]
+    },
+    {
+      "name": "Hydroelectric Power",
+      "pillar_phrases": ["hydroelectric power", "hydropower"],
+      "subcategories": [
+        "Large Dams & Major Projects",
+        "Small-Scale & Micro Hydro",
+        "Environmental & Social Impacts",
+        "Pumped Storage & Energy Storage"
+      ]
+    },
+    {
+      "name": "Bioenergy",
+      "pillar_phrases": ["bioenergy", "biogas"],
+      "subcategories": [
+        "Agricultural Biomass",
+        "Biogas Systems",
+        "Biofuels",
+        "Waste-to-Energy"
+      ]
+    },
+    {
+      "name": "Energy Storage & Grid Infrastructure",
+      "pillar_phrases": ["energy storage", "battery storage"],
+      "subcategories": [
+        "Battery Storage Systems",
+        "Grid Infrastructure & Challenges",
+        "Alternative Storage Technologies"
+      ]
+    },
+    {
+      "name": "Electric Vehicles & Clean Transport",
+      "pillar_phrases": ["electric vehicles", "EV"],
+      "subcategories": [
+        "Buying & Owning an EV",
+        "EV Charging Infrastructure",
+        "Thailand's EV Industry"
+      ]
+    },
+    {
+      "name": "Green Buildings & Energy Efficiency",
+      "pillar_phrases": ["green building", "energy efficiency"],
+      "subcategories": [
+        "Practical Energy Efficiency",
+        "District Cooling Systems",
+        "Certification & Standards"
+      ]
+    },
+    {
+      "name": "Policy, Economics & Thailand Context",
+      "pillar_phrases": ["energy policy", "renewable energy policy"],
+      "subcategories": [
+        "Incentives, Subsidies & Tax Breaks",
+        "Electricity Pricing & Economics",
+        "National Energy Goals & Plans",
+        "Regional Energy Landscapes",
+        "Community & Cooperative Energy"
+      ]
+    }
+  ]
+}
+```
