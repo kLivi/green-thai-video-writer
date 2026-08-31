@@ -428,3 +428,25 @@ never republish. Parking lot: port claude-blog's auto-trash-on-verify-fail
 - SKILL.md (Step 4a + checklist)
 
 **Next steps**: Run `/get-video` on a queued video and confirm `output/sources.json` is written and valid; then set `REQUIRE_SOURCES_JSON = True`.
+
+---
+
+## 2026-09-01 — Karpathy-style LLM wiki added
+
+**Task**: Audit for an existing LLM wiki and, finding none, build one sourced only from this repo's existing docs.
+
+**What was done**:
+- Audited repo for a Karpathy-style wiki — none existed
+- Built one with the karpathy-llm-wiki skill: raw/ source mirror plus wiki/ index.md, log.md, and 6 topic articles
+- Sourced entirely from existing repo documentation, no external claims introduced
+- Committed wiki/ and raw/ only; pre-existing dirty files (scripts/fix_cover.py, scripts/generate_images.py, .gitignore edit, logs/, .serena/) left uncommitted deliberately
+
+**Files changed**:
+- wiki/ (new — index.md, log.md, 6 topic articles)
+- raw/ (new — source doc mirror)
+
+**Result**:
+- 6-article wiki now documents this pipeline's architecture and history for future sessions
+- No open disputes found while building this wiki (unlike the sibling idea-writer wiki)
+
+**Next steps**: Run `/get-video` once on a queued video and confirm it writes a valid `output/sources.json`; once proven, set `REQUIRE_SOURCES_JSON = True` in `scripts/wordpress_upload.py`.
