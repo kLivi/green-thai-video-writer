@@ -52,7 +52,7 @@ SKIP: https://www.youtube.com/watch?v=j48Ydofhn5w
 # Banpu CEO: Thailand's biggest coal producer going green (19 min) — DUPLICATE, already covered by post published 2026-07-21 (thailand-biggest-coal-producer-goes-green-banpu-energy-transition)
 DONE: https://www.youtube.com/watch?v=cWW7fzimlkA
 # EA Green Energy success formula — Go Green 2024 seminar
-VETTED: https://www.youtube.com/watch?v=Q8cpDMp3l-Y
+DONE: https://www.youtube.com/watch?v=Q8cpDMp3l-Y
 # Bangchak Climate Tech — Go Green 2024 seminar
 
 # --- Bioenergy ---
