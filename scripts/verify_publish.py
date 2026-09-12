@@ -33,6 +33,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from wordpress_upload import get_wp_config, WordPressClient, _notify_failure  # noqa: E402
 from chart_inspect import find_svgs, inspect_html, renderer_available  # noqa: E402
 
+# Self-citation detector is shared with claude-blog and get-idea — see ../../shared/self_citations.py.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "shared"))
+from self_citations import find_self_citations  # noqa: E402
+
 MIN_WORDS = 600
 MAX_WORDS = 4000
 MIN_INLINE_IMAGES = 1
@@ -62,6 +66,28 @@ class Check:
         mark = "PASS" if self.ok else ("WARN" if self.severity == "warn" else "FAIL")
         tail = f"  — {self.detail}" if self.detail else ""
         return f"  [{mark}] {self.name}{tail}"
+
+
+def check_self_citations(content: str) -> list[Check]:
+    """Assert no self-referential citation leaked into the published body.
+
+    Same detector as claude-blog's scripts/self_citation_sweep.py (a class of
+    leaks, not one spelling: the brand praised as a "canonical"/"internal"
+    source, a literal internal filename, or a brand-less "our internal
+    database" paraphrase), wired into the publish gate itself so a leak fails
+    BEFORE going live. Does not touch legitimate video-transcript attribution
+    (source_type "transcript") — that's a real, non-self source.
+    """
+    findings = find_self_citations(content)
+    if not findings:
+        return [Check("no self-citation leaks", ok=True, detail="")]
+    classes = sorted({f["class"] for f in findings})
+    sample = findings[0]["match"]
+    return [Check(
+        "no self-citation leaks",
+        ok=False,
+        detail=f"{len(findings)} leak(s) [{', '.join(classes)}], e.g. {sample!r}",
+    )]
 
 
 def _is_http(url: str) -> bool:
@@ -171,6 +197,9 @@ def run_checks(client: WordPressClient, post: dict, require_chart: bool) -> list
     # 5. No leftover placeholder/marker text. HIGH.
     found = [p for p in PLACEHOLDER_PATTERNS if re.search(p, content, re.IGNORECASE)]
     results.append(Check("no leftover placeholder markers", ok=not found, detail="" if not found else f"found: {found}"))
+
+    # 5b. No self-referential citation leak. HIGH.
+    results.extend(check_self_citations(content))
 
     # 6. No empty/alt-less inline img. MEDIUM.
     empties = sum(1 for img in imgs if not (img.get("src") or "").strip() or not (img.get("alt") or "").strip())
