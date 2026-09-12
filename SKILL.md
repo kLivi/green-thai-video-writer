@@ -206,18 +206,63 @@ Schema — every field required, per record:
   reads as plain fact. Supplementary WebSearch figures (Step 4) are different:
   those are checked against real pages and need no such hedge.
 - `source_type`: `"web"`, `"internal-verified"` for claims from
-  `claude-blog/shared/thai-facts.md` (then `url` may be empty), or `"derived"`
-  for a number you worked out yourself. For `internal-verified` records, write
-  `source_name:""` and `url:""`, then resolve both yourself from the
-  structured allowlist in `claude-blog/shared/thai-facts.md` (the `value |
-  source_name | url` rows) before writing the record. A value with no
-  allowlist row is dropped — never publish it under a name you invented, and
+  `claude-blog/shared/thai-facts.md` (then `url` may be empty), `"derived"`
+  for a number you worked out yourself, or `"transcript"` (above). For
+  `internal-verified` records, write `source_name:""` and `url:""` — you do
+  not choose these. `research_gate.py --finalize` (Step 4b, next) resolves the
+  real citing authority from the structured allowlist in
+  `claude-blog/shared/thai-facts.md` (the `value | source_name | url` rows)
+  and fills both in. A value with no allowlist row is dropped rather than
+  published under a name you invented, so do not try to supply one — and
   never put the filename `thai-facts.md` in `source_name`; that leak reached
-  five live articles. **Unlike claude-blog, this pipeline has no
-  `research_gate.py --finalize`**, so nothing re-checks this after you: what
-  you write here is what publishes. The same applies to `quote` — it is not
-  re-sliced from the fetched page here, so copy the sentence character for
-  character and never smooth it to read better.
+  five live articles before this gate existed. **You do not have the last
+  word on `quote` either.** `research_gate.py --finalize` re-fetches the page
+  and replaces your text with the sentence it finds carrying the value,
+  verbatim from the bytes. Write the closest sentence you can — it still
+  drives the pre-finalize check — but do not polish it to read better.
+  (`internal-verified`/`derived`/`transcript` records have no page to
+  re-fetch, so their `quote` is never rewritten.)
+
+#### Step 4b — Research-Time Citation Gate (REQUIRED)
+
+Run the same deterministic gate claude-blog uses, while you are still in the
+loop to fix a failure — not a subagent-only step. It re-checks every web
+number against the page, resolves `internal-verified` source_name/url from
+the `thai-facts.md` allowlist, and re-slices every web `quote` verbatim out of
+the page it just fetched. `derived` and `transcript` records pass through
+unchanged (no page to check). Ported from claude-blog's
+`scripts/research_gate.py` 2026-09-12 to close the class of leaks documented
+above.
+
+1. **Run CHECK:**
+   ```bash
+   python3 scripts/research_gate.py output/sources.json --thai-facts /home/unify/Documents/green-energy-thailand/claude-blog/shared/thai-facts.md
+   ```
+   Exit 0 → all citations pass, proceed to Step 5.
+2. Exit 10 → the script prints one `RESOURCE_NEEDED: {cid} | {value} | {source} | {url}`
+   line per failing stat (its cited page does not actually contain the number).
+   For each, re-source that specific stat — find an alternate authoritative
+   source whose fetched page genuinely contains the number, and rewrite that
+   entry in `output/sources.json` (same fields: `id, value, claim, source_name,
+   url, quote, tier, source_type`). Up to **3 attempts per stat**.
+3. Re-run CHECK after each re-source pass. Repeat the loop.
+4. **Bounded:** a per-article ceiling of **12 total re-source attempts** across
+   all stats. Stop looping when CHECK passes, OR the ceiling is hit, OR a full
+   pass makes no progress (no stat improved).
+5. When stopping with failures still present, run FINALIZE:
+   ```bash
+   python3 scripts/research_gate.py output/sources.json --finalize --thai-facts /home/unify/Documents/green-energy-thailand/claude-blog/shared/thai-facts.md
+   ```
+   - Exit 0 → the failing stats were dropped (≥4 valid citations remain), and
+     `internal-verified`/`quote` corrections were written. Proceed to Step 5
+     with the rewritten `sources.json`.
+   - Exit 20 → **HOLD.** Dropping would leave fewer than 4 valid citations. Stop
+     the whole run with a non-zero failure — do NOT proceed to writing. In
+     headless mode this surfaces as a pipeline failure the runner turns into a
+     Discord alert, and the queue row stays `Ready` for retry.
+6. **Sole citation authority:** after this step, `output/sources.json` is the
+   ONLY source for citations. The writer must NEVER cite a stat from memory
+   that is no longer in the file.
 
 ### Step 5 — Write article
 
