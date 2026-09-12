@@ -193,10 +193,11 @@ Schema — every field required, per record:
   no quote for a page you did not open.
 - `source_type`: `"web"`, or `"internal-verified"` for claims from
   `claude-blog/shared/thai-facts.md` (then `url` may be empty). For
-  `internal-verified` records, `source_name` is the real citing authority
-  named in `thai-facts.md` (e.g. `"MEA"`, `"Bangkok Post"`) — never write
-  `"thai-facts.md"` or `"thai-facts"` into `source_name`; it's our internal
-  file, not a citable source, and will leak into the published article.
+  `internal-verified` records, write `source_name:""` and `url:""` — you
+  do not choose these. `research_gate.py --finalize` resolves the real
+  citing authority from `thai-facts.md`'s structured allowlist and fills
+  them in; a value with no allowlist row is dropped rather than published
+  under a name you invented.
 - `tier`: 1 = primary/official, 2 = established press/industry, 3 = other.
 - **A claim sourced only to the video is not a web citation.** Attribute it to
   the video in prose; do not invent a URL record for it.
