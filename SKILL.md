@@ -191,16 +191,33 @@ Schema — every field required, per record:
 
 - `quote` MUST be verbatim from that page and contain the number. No paraphrase;
   no quote for a page you did not open.
-- `source_type`: `"web"`, or `"internal-verified"` for claims from
-  `claude-blog/shared/thai-facts.md` (then `url` may be empty). For
-  `internal-verified` records, write `source_name:""` and `url:""` — you
-  do not choose these. `research_gate.py --finalize` resolves the real
-  citing authority from `thai-facts.md`'s structured allowlist and fills
-  them in; a value with no allowlist row is dropped rather than published
-  under a name you invented.
-- `tier`: 1 = primary/official, 2 = established press/industry, 3 = other.
-- **A claim sourced only to the video is not a web citation.** Attribute it to
-  the video in prose; do not invent a URL record for it.
+- **A figure the video states gets `source_type:"transcript"`** — not a `"web"`
+  record borrowed from a page that never carried it. Set `url` to the video
+  (timestamped, e.g. `https://youtu.be/abc123?t=412`), `quote` to the transcript
+  line containing the number, `tier: 3`. The gate cannot fetch a video, so these
+  are never verified against anything — which is exactly why the next rule is not
+  optional.
+- **Say in the prose that it came from the video.** A number a company states on
+  camera is evidence of what was said, not of what is true, and the reader never
+  sees `sources.json`. Every transcript-sourced figure needs its attribution in
+  the same sentence — "in the video, Bangchak says…", "according to the
+  presentation…", or the speaker's name. The publish gate prints
+  `[warn] UNATTRIBUTED_VIDEO_CLAIM | <value> | <sentence>` for each one that
+  reads as plain fact. Supplementary WebSearch figures (Step 4) are different:
+  those are checked against real pages and need no such hedge.
+- `source_type`: `"web"`, `"internal-verified"` for claims from
+  `claude-blog/shared/thai-facts.md` (then `url` may be empty), or `"derived"`
+  for a number you worked out yourself. For `internal-verified` records, write
+  `source_name:""` and `url:""`, then resolve both yourself from the
+  structured allowlist in `claude-blog/shared/thai-facts.md` (the `value |
+  source_name | url` rows) before writing the record. A value with no
+  allowlist row is dropped — never publish it under a name you invented, and
+  never put the filename `thai-facts.md` in `source_name`; that leak reached
+  five live articles. **Unlike claude-blog, this pipeline has no
+  `research_gate.py --finalize`**, so nothing re-checks this after you: what
+  you write here is what publishes. The same applies to `quote` — it is not
+  re-sliced from the fetched page here, so copy the sentence character for
+  character and never smooth it to read better.
 
 ### Step 5 — Write article
 
@@ -213,6 +230,13 @@ Using `prompts/content-rules.md` and `prompts/video-article-template.md`:
 - Clearly attribute information to the video ("According to [channel]...", "The video shows...")
 - Enhance with Thai context from `prompts/thai-context.md` and Step 4 research
 - Cite all external statistics inline with source name, year, and hyperlink
+- **A number you work out yourself is not a cited stat.** Summing two figures,
+  converting a currency, or computing a percentage change or per-unit price
+  produces a number no source page states — citing a source's URL next to it
+  attributes to that source a figure it never gave. Either drop the
+  arithmetic, or append a `source_type:"derived"` record (Step 4a) whose
+  `claim` states the computation, and cite that record's source name instead.
+  The pre-upload gate flags any number in the body no record accounts for.
 - Include FAQ section
 - Target 1500-2500 words
 - **Internal links:** When you add an in-article internal link, point it to a specific post at `/posts/{slug}/` — never to a `/category/` archive page. (Most internal links are added automatically by the linking pipeline after publish; only add one inline when it genuinely helps the reader.)
@@ -483,8 +507,14 @@ sed -i "s|^${LINE}$|SKIP: ${LINE#*: }|" queue/video-queue.txt
 ## Quality Checklist (before publishing)
 
 - [ ] `output/sources.json` exists, is this run's (not a leftover), and covers every cited claim
+- [ ] Every `[warn] UNATTRIBUTED_VIDEO_CLAIM` from the gate is resolved — the
+      sentence now names the video or the speaker, or the claim is cut
 - [ ] Every `quote` is verbatim from the page at its `url` — a named source and a live hyperlink are NOT evidence the page supports the claim
 - [ ] No fabricated statistics
+- [ ] Every number the citation gate flagged as `[warn] UNSOURCED_NUMBER` is
+      either backed by a `derived` record (your own arithmetic), re-sourced, or
+      cut — the warning doesn't block, but a still-standing unsourced number
+      next to an unrelated citation is exactly how post 1786 shipped
 - [ ] Video properly attributed (channel name, link)
 - [ ] YouTube embed present
 - [ ] TL;DR box present
