@@ -470,3 +470,31 @@ never republish. Parking lot: port claude-blog's auto-trash-on-verify-fail
 - A fuller fix (removing the agent from choosing source_name/url entirely) is planned in claude-blog's `plan-internal-verified-source-lookup.md` — this pipeline will need the same instruction update again once that lands
 
 **Next steps**: Run `/get-video` once on a queued video and confirm it writes a valid `output/sources.json`; once proven, set `REQUIRE_SOURCES_JSON = True` in `scripts/wordpress_upload.py`.
+
+---
+
+## 2026-09-12 — Added research-time citation gate and self-citation publish block
+
+**Task**: Port claude-blog's deterministic internal-verified citation resolution (research_gate.py) and its self-citation detector to this pipeline, closing the gap where neither existed here.
+
+**What was done**:
+- Added `scripts/research_gate.py` (byte-identical port of claude-blog's) plus `scripts/__init__.py`, `tests/__init__.py`, `tests/conftest.py`, `tests/test_research_gate.py` (20 cases)
+- Updated `SKILL.md` with the research-time citation gate step, replacing the "no gate exists" language
+- Added `check_self_citations()` to `scripts/verify_publish.py`, importing the detector from `../../shared/self_citations.py` (shared with claude-blog and idea-writer, not a local copy) as a hard FAIL
+- Added `tests/test_verify_publish.py` (5 cases, including a guard that legitimate video-transcript attribution stays unaffected)
+
+**Files changed**:
+- scripts/research_gate.py (new)
+- scripts/__init__.py (new)
+- scripts/verify_publish.py (modified)
+- tests/ (new: __init__.py, conftest.py, test_research_gate.py, test_verify_publish.py)
+- SKILL.md (modified)
+
+**Result**:
+- research_gate.py verified against a live fixture (real Wikipedia fetch + real thai-facts.md allowlist): source_name/url resolved from "" to a real MEA URL, quote re-sliced verbatim from the fetched page
+- check_self_citations() verified end-to-end against live post 1759 on the shared WordPress site — VERIFICATION PASSED, no self-citation leaks
+- 26 tests passing (21 existing + 5 new)
+- Committed and pushed: 0eb6100 (research_gate.py), 1b716b8 (self-citation gate)
+- Left untouched (unrelated pre-existing clutter): scripts/fix_cover.py, scripts/generate_images.py, .serena/, logs/, CLAUDE.md.backup2-2026-04-13
+
+**Next steps**: Run `/get-video` once on a queued video and confirm `research_gate.py` resolves internal-verified sources and re-slices quotes on real output, not just a fixture — blocked-on: keith (needs a real pipeline run against live APIs/WordPress). Once proven, set `REQUIRE_SOURCES_JSON = True` in `scripts/wordpress_upload.py`.
