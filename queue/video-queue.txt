@@ -58,7 +58,7 @@ DONE: https://www.youtube.com/watch?v=Q8cpDMp3l-Y
 # --- Bioenergy ---
 DONE: https://www.youtube.com/watch?v=wXfp-hBG1NY|https://www.youtube.com/watch?v=E-kA_VPwq08|https://www.youtube.com/watch?v=Yhgdsf6B85A|https://www.youtube.com/watch?v=Cf3AbFVkPf4|https://www.youtube.com/watch?v=er1N5sfSOOw|https://www.youtube.com/watch?v=JHLZv3qaCLM|https://www.youtube.com/watch?v=X4oRYYkxkWc|https://www.youtube.com/watch?v=IHq6FwfJlKA
 # Bioenergy & Biochemical Industry in Thailand — 8-part academic seminar series
-VETTED: https://www.youtube.com/watch?v=44DBQQ3CwBE
+DONE: https://www.youtube.com/watch?v=44DBQQ3CwBE
 # Thai SynBio Forum: Bioenergy and Circular Economy
 
 # --- Energy Policy ---
