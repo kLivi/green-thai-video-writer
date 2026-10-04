@@ -62,7 +62,7 @@ DONE: https://www.youtube.com/watch?v=44DBQQ3CwBE
 # Thai SynBio Forum: Bioenergy and Circular Economy
 
 # --- Energy Policy ---
-VETTED: https://www.youtube.com/watch?v=UJpr0T7nlA8
+DONE: https://www.youtube.com/watch?v=UJpr0T7nlA8
 # Energy Transition Series — Thailand 2025 & Beyond
 VETTED: https://www.youtube.com/watch?v=-DIIaNexqDM
 # ERC Forum 2024: Energy policy to mobilize Thailand's energy transition
