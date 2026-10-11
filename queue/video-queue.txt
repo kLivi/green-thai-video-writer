@@ -64,7 +64,7 @@ DONE: https://www.youtube.com/watch?v=44DBQQ3CwBE
 # --- Energy Policy ---
 DONE: https://www.youtube.com/watch?v=UJpr0T7nlA8
 # Energy Transition Series — Thailand 2025 & Beyond
-VETTED: https://www.youtube.com/watch?v=-DIIaNexqDM
+DONE: https://www.youtube.com/watch?v=-DIIaNexqDM
 # ERC Forum 2024: Energy policy to mobilize Thailand's energy transition
 VETTED: https://www.youtube.com/watch?v=hA1mBKpi5Tk
 # ERC Forum 2023: Energy policy and regulation in Thailand
