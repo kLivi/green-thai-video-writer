@@ -70,5 +70,5 @@ DONE: https://www.youtube.com/watch?v=hA1mBKpi5Tk
 # ERC Forum 2023: Energy policy and regulation in Thailand
 VETTED: https://www.youtube.com/watch?v=N_LUQr8l2HM
 # Energy transition and sustainability in Thailand (1.5 hrs)
-VETTED: https://www.youtube.com/watch?v=-DUvmh14Zcs
+DONE: https://www.youtube.com/watch?v=-DUvmh14Zcs
 # Renewable energy and institutional governance in Thailand — researcher interview
