@@ -4,3 +4,6 @@ __pycache__/
 *.pyc
 handoff.md
 *:Zone.Identifier
+.serena/
+logs/
+CLAUDE.md.backup*
