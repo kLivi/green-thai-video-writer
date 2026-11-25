@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/session-kit/session_start.py --repo \"$CLAUDE_PROJECT_DIR\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

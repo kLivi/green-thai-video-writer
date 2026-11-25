@@ -1,3 +1,7 @@
+# ARCHIVED 2026-11-25 (session kit) — append-only history up to this date. New session entries are written
+# to `progress/YYYY-MM-DD.md` by `~/.claude/session-kit/session_end.py`. Search both with
+# `python3 ~/.claude/session-kit/recall.py <words>`. Do not append here.
+
 ## 2026-08-07 — Retired the [INTERNAL-LINK] marker strip; markers now refuse upload
 
 **Task**: Apply the cross-pipeline half of claude-blog's marker-removal spec.

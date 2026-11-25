@@ -1,0 +1,12 @@
+{
+  "wiki_index": "wiki/index.md",
+  "wiki_log": "wiki/log.md",
+  "state": "STATE.md",
+  "progress_dir": "progress",
+  "progress_archive": "progress.txt",
+  "days_progress": 7,
+  "days_decisions": 14,
+  "days_verified": 7,
+  "stuck_after": 3,
+  "end_sweeps": []
+}
