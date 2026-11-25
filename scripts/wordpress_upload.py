@@ -88,12 +88,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "shared")
 from env_loader import load_env  # noqa: E402
 from citation_gate import run_citation_gate  # noqa: E402
 
-# Whether a missing sources.json hard-fails the publish. Starts False: the gate
-# is wired before the SKILL is proven to emit the file, and flipping both at
-# once would kill a scheduled bi-weekly run on the first miss. Flip to True
-# after a real /get-video run produces a valid sources.json — see
+# Whether a missing sources.json hard-fails the publish. Flipped to True
+# 2026-11-25 after scheduled runs 2026-11-08 and 2026-11-15 both wrote a valid
+# sources.json and passed the citation gate — see
 # claude-blog/spec-citation-gate-portability.md build order step 6.
-REQUIRE_SOURCES_JSON = False
+REQUIRE_SOURCES_JSON = True
 
 
 # Pipeline label used in Discord failure alerts

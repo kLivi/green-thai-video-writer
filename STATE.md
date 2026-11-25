@@ -4,8 +4,8 @@ name: "Green Thai Video Writer"
 repo_path: "~/Documents/green-energy-thailand/green-thai-video-writer"
 business: "Green Energy Thailand"
 status: "live"
-updated: 2026-11-25
-next: "Set REQUIRE_SOURCES_JSON = True in scripts/wordpress_upload.py"
+updated: 2026-11-26
+next: "Refill the queue"
 ---
 
 # Green Thai Video Writer
@@ -14,9 +14,8 @@ Video-to-article pipeline for greenenergythailand.com: YouTube URL → transcrip
 
 ## Next Step
 
-1. **Set `REQUIRE_SOURCES_JSON = True` in `scripts/wordpress_upload.py`** (2026-11-25) Real scheduled runs 11-08 and 11-15 (`~/scheduled-task-logs/get-video/`) wrote a valid `output/sources.json` and passed the citation gate, so a missing file can now block instead of warn. closes-when: the constant reads True and tests pass
-2. **Refill the queue** (2026-11-25) 11-22 run found no vetted videos; scheduled runs idle until Keith adds `VETTED:` lines to `queue/video-queue.txt`. blocked-on: keith. closes-when: a scheduled run starts on a vetted video
-3. **Resolve orphan drafts 1554 and 2145** (2026-11-25) both failed verification (1554: fal.ai cover auth error Jul 19; 2145: 10-25 run). Regenerate cover and set it, or trash the draft. closes-when: neither is an unresolved WP draft
+1. **Refill the queue** (2026-11-25) 11-22 run found no vetted videos; scheduled runs idle until Keith adds `VETTED:` lines to `queue/video-queue.txt`. blocked-on: keith. closes-when: a scheduled run starts on a vetted video
+2. **Resolve orphan drafts 1554 and 2145** (2026-11-25) both failed verification (1554: fal.ai cover auth error Jul 19; 2145: 10-25 run). Regenerate cover and set it, or trash the draft. closes-when: neither is an unresolved WP draft
 
 ## Current Focus
 
@@ -26,7 +25,7 @@ Live and automated. Backend is Claude/Max (`--model sonnet`); the Kimi K2.6 bloc
 
 - **Invariant:** WordPress is source of truth after publish; never re-upload local HTML over a published post.
 - **[source of truth]** `SKILL.md`, `prompts/`, `scripts/`, `queue/video-queue.txt` · **[derived, never hand-edit]** `output/`, `wiki/` (built from `raw/`)
-- `../../shared/citation_gate.py` runs inside `wordpress_upload.py` before any WP API call; cannot be flag-disabled. Blocks publish if a cited page lacks its number.
+- `../../shared/citation_gate.py` runs inside `wordpress_upload.py` before any WP API call; cannot be flag-disabled. Blocks publish if a cited page lacks its number, or if `sources.json` is missing (`REQUIRE_SOURCES_JSON = True`; an uncited article must emit `{"sources": []}`).
 - `scripts/research_gate.py` resolves `internal-verified` sources from `thai-facts.md`'s allowlist and re-slices web quotes verbatim from the fetched page.
 - `scripts/verify_publish.py::check_self_citations()` hard-fails a publish that cites its own brand/internal file (shared detector `../../shared/self_citations.py`).
 - Video-only claims are attributed in prose, never given an invented URL record.
